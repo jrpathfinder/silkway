@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+.dart_tool/
+.packages
+.pub-cache/
+coverage/
+*.log
+.DS_Store
+.idea/

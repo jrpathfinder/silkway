@@ -1,0 +1,7 @@
+{
+  "name": "@central-asia/admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "devDependencies": { "typescript": "^5.7.2" }
+}

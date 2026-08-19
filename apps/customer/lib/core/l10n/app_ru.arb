@@ -1,0 +1,25 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Silkway",
+  "navMenu": "Меню",
+  "navCart": "Корзина",
+  "navProfile": "Профиль",
+  "authPhoneTitle": "Вход",
+  "authPhonePrompt": "Введите номер телефона",
+  "authPhoneLabel": "Телефон",
+  "authPhoneNext": "Далее",
+  "authOtpTitle": "Код подтверждения",
+  "authOtpSentTo": "Код отправлен на {phone}",
+  "@authOtpSentTo": {
+    "placeholders": { "phone": { "type": "String" } }
+  },
+  "authOtpLabel": "Код из СМС",
+  "authOtpConfirm": "Подтвердить",
+  "authOtpInvalid": "Неверный код",
+  "cartEmpty": "Корзина пуста",
+  "cartCheckout": "Оформить заказ",
+  "genericError": "Ошибка: {error}",
+  "@genericError": {
+    "placeholders": { "error": { "type": "String" } }
+  }
+}

@@ -1,5 +1,5 @@
-name: central_asia_customer
-description: Customer delivery app for Central Asia Restaurant.
+name: silkway_app
+description: Silkway customer and courier delivery app (Central Asia Restaurant, Moscow).
 publish_to: none
 version: 0.1.0+1
 environment:
@@ -7,10 +7,44 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Networking
+  dio: ^5.5.0
+
+  # Models / serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # Identifiers
+  uuid: ^4.5.0
+
+  # Localization
+  intl: ^0.20.3
+
+  # Payment checkout
+  webview_flutter: ^4.9.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.3
 flutter:
   uses-material-design: true
+  generate: true

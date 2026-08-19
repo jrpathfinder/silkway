@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/widgets/dish_image.dart';
 import '../../../core/design_system/widgets/sw_quantity_stepper.dart';
 import '../../../core/design_system/widgets/sw_sticky_cta_bar.dart';
 import '../../../core/design_system/widgets/sw_toast.dart';
@@ -39,6 +40,43 @@ class _ItemDetailSheetState extends ConsumerState<ItemDetailSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (item.imageUrl != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      formatRub(item.priceRub),
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 220,
+                    width: double.infinity,
+                    child: DishImage(
+                      imageUrl: item.imageUrl,
+                      fit: BoxFit.contain,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Text(item.name, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
           Text(item.description, style: Theme.of(context).textTheme.bodyMedium),

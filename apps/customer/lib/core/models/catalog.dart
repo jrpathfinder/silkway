@@ -38,6 +38,7 @@ class CatalogItem {
     required this.priceRub,
     required this.isAvailable,
     required this.modifiers,
+    this.imageUrl,
   });
 
   final String id;
@@ -47,6 +48,12 @@ class CatalogItem {
   final double priceRub;
   final bool isAvailable;
   final List<CatalogModifier> modifiers;
+
+  /// Not part of the backend contract yet (CatalogService has no image
+  /// field) — a bundled asset path (e.g. "assets/branding/dishes/plov.png")
+  /// today from CatalogRepositoryMock, or a remote URL once the backend adds
+  /// one. See DishImage for how the two are told apart.
+  final String? imageUrl;
 
   factory CatalogItem.fromJson(Map<String, dynamic> json) => CatalogItem(
         id: json['id'] as String,
@@ -58,6 +65,7 @@ class CatalogItem {
         modifiers: (json['modifiers'] as List<dynamic>? ?? const [])
             .map((m) => CatalogModifier.fromJson(m as Map<String, dynamic>))
             .toList(),
+        imageUrl: json['imageUrl'] as String?,
       );
 }
 

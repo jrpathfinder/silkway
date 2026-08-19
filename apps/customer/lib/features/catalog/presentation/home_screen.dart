@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/widgets/dish_image.dart';
 import '../../../core/design_system/widgets/sw_bottom_sheet.dart';
 import '../../../core/design_system/widgets/sw_carousel.dart';
 import '../../../core/models/catalog.dart';
@@ -106,10 +107,10 @@ class _DishCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
+              SizedBox(
                 height: 110,
-                decoration: BoxDecoration(color: const Color(0xffead8c5), borderRadius: BorderRadius.circular(12)),
-                child: const Center(child: Icon(Icons.restaurant, size: 40, color: Color(0xffb9633d))),
+                width: double.infinity,
+                child: DishImage(imageUrl: item.imageUrl),
               ),
               const SizedBox(height: 12),
               Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700)),

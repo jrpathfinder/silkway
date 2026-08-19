@@ -45,6 +45,23 @@ dev_dependencies:
   freezed: ^2.5.7
   json_serializable: ^6.8.0
   riverpod_generator: ^2.4.3
+  flutter_native_splash: ^2.4.1
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/branding/
+    - assets/branding/dishes/
+
+# Generated via `dart run flutter_native_splash:create`.
+# Source: assets/branding/splash.png, a frame from the brand video
+# (Чайхана Шёлковый Путь) at generated_video.mp4 in the repo root.
+# TODO(design): source art is only 464x656 (low-res video export) — looks
+# soft on high-DPI screens. Swap in a higher-resolution export when available.
+flutter_native_splash:
+  color: "#2A211A"
+  image: assets/branding/splash.png
+  fullscreen: true
+  android_12:
+    color: "#2A211A"
+    image: assets/branding/splash.png

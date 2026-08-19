@@ -25,6 +25,7 @@ class CatalogRepositoryMock implements CatalogRepository {
           priceRub: 590,
           isAvailable: true,
           modifiers: [CatalogModifier(id: 'extra-meat', name: 'Дополнительное мясо', priceRub: 180)],
+          imageUrl: 'assets/branding/dishes/plov.png',
         ),
         CatalogItem(
           id: 'samsa-lamb',
@@ -34,6 +35,7 @@ class CatalogRepositoryMock implements CatalogRepository {
           priceRub: 220,
           isAvailable: true,
           modifiers: [],
+          imageUrl: 'assets/branding/dishes/samsa.png',
         ),
       ],
     );

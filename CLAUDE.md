@@ -55,6 +55,18 @@ The API auto-applies `apps/api/src/database/schema.sql` on boot when `DATABASE_U
 
 Customer selects location → server-priced cart snapshot → order created `PENDING_PAYMENT` with idempotency key → payment adapter creates checkout → verified webhook moves order to `PAID` → restaurant accepts → delivery adapter creates delivery → provider events update status → outbox/reconciliation retries unfinished external calls. Full detail in [docs/architecture.md](docs/architecture.md) (Russian).
 
+## Linear sync
+
+FR/NFR backlog is tracked in Linear, workspace `silkway`, team `Silkway` (key `SIL`), split across two projects: `SilkWayPlatform` (backend/platform) and `SilkWayIOS` (Flutter mobile, both iOS and Android). Whenever doing coding work against one of these tracked epics:
+
+- Before starting, find the matching Linear issue (`list_issues` / search by title) rather than re-deriving scope from scratch.
+- When you start substantive work on an issue still in `Backlog`, move it to `In Progress`.
+- When a meaningful chunk of work lands (e.g. a PR is pushed), add a comment on the issue summarizing what shipped and what's still open against that issue's scope, linking the PR.
+- Only move an issue to `Done` when its full scope is actually complete — these epics are broad (e.g. "search/filter" bundled with basic browsing), so a partial UI/asset change is progress, not completion. Default to `In Progress` + a comment rather than closing early.
+- Never merge a PR without explicit user approval, regardless of Linear status.
+
+**PR titles** follow `[SIL-XX] type: short description` — `SIL-XX` is the Linear issue the PR's work is scoped to (the one being moved to `In Progress`/commented on above), `type` is a conventional-commit-style prefix (`feat`, `fix`, `chore`, `refactor`, ...), and the description is a short imperative summary. When a PR spans multiple epics (e.g. a foundational scaffold), list every issue it actually touches as a comma-separated bracket: `[SIL-1, SIL-2, ...] type: short description` — only include issues with real corresponding work, not every issue that exists.
+
 ## Non-obvious conventions
 
 - Money is stored/queried as integer minor units (`price_minor`, kopecks) in Postgres but exposed as `priceRub` (float rubles) in API/service types — conversion happens in the service layer (see `CatalogService.getForLocation`).

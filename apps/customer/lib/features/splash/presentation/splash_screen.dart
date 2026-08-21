@@ -1,147 +1,154 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 
-/// Брендовое видео-заставка (Чайхана Шёлковый Путь), проигрывается один раз
-/// при запуске приложения.
+/// Брендовая заставка при запуске (Чайхана Шёлковый Путь).
 ///
-/// ВАЖНО: это ВТОРАЯ заставка. Первой показывается нативная (пакет
-/// `flutter_native_splash`, настройки в pubspec.yaml) — она закрывает паузу,
-/// пока грузится движок Flutter, и по определению может быть только
-/// картинкой, видео там невозможно. Поэтому она показывает
-/// `assets/branding/splash.png` — кадр из этого же видео. У обеих заставок
-/// одинаковый цвет фона, чтобы переход «неподвижный кадр → видео» выглядел
-/// как один непрерывный экран, без мигания.
+/// Сюжет: шёлковая шторка с логотипом плавно растворяется, открывая интерьер
+/// чайханы. Обе сцены — статичные картинки, поэтому никаких кодеков в старте
+/// нет: видеоролик отсюда убран намеренно (декодер раскручивался ~2 секунды
+/// до первого кадра, сам ролик занимал ещё 6, а его пропорции не совпадали с
+/// экраном и по краям оставались тёмные поля).
 ///
-/// Экран ВСЕГДА завершается вызовом [onFinished]: по окончании ролика, по
-/// тапу (пропуск), или сразу же, если видео не удалось загрузить. Заставка
-/// не имеет права заблокировать пользователю вход в приложение.
+/// ВАЖНО: это ВТОРАЯ заставка. Первой ОС показывает нативную (пакет
+/// `flutter_native_splash`, настройки в pubspec.yaml). Она показывает тот же
+/// [silkAsset] и в том же режиме масштабирования, а анимация здесь стартует
+/// с масштаба 1.0 и нулевой прозрачности чайханы — то есть ровно с того
+/// кадра, который уже на экране. Поэтому передача управления незаметна.
+///
+/// Экран ВСЕГДА завершается вызовом [onFinished]: по окончании анимации или
+/// по тапу. Заставка не имеет права заблокировать вход в приложение.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, required this.onFinished});
 
   final VoidCallback onFinished;
 
-  /// Совпадает с `flutter_native_splash.color` в pubspec.yaml и с полями
-  /// (letterbox) вокруг самого видео.
+  /// Первая сцена. Должна совпадать с картинкой в `flutter_native_splash`
+  /// (pubspec.yaml), иначе при передаче управления кадр дёрнется.
+  static const silkAsset = 'assets/branding/splash_full.png';
+
+  /// Вторая сцена, в которую уходит переход.
+  static const teahouseAsset = 'assets/branding/teahouse_full.png';
+
+  /// Совпадает с `flutter_native_splash.color` — виден, только если картинки
+  /// почему-то не загрузились.
   static const backgroundColor = Color(0xff2a211a);
 
-  /// Предел ожидания ЗАГРУЗКИ видео. Как только воспроизведение началось,
-  /// таймер перезапускается на реальную длительность ролика плюс
-  /// [playbackGrace] — иначе на медленном старте он сработал бы прямо
-  /// посреди видео и обрезал концовку.
-  static const maxDuration = Duration(seconds: 8);
+  /// Общая длительность заставки. Компромисс: короче — и вторая сцена не
+  /// успевает считаться, длиннее — пользователь ждёт перед меню на каждом
+  /// холодном запуске.
+  static const duration = Duration(milliseconds: 2200);
 
-  /// Запас поверх длительности ролика перед срабатыванием страховочного
-  /// таймера: гасит рывки декодирования, но не даёт зависшему видео
-  /// подвесить приложение.
-  static const playbackGrace = Duration(seconds: 3);
+  /// Окно перехода внутри [duration]: до него видна только шторка, после —
+  /// только чайхана.
+  ///
+  /// Растворение намеренно короткое (~400 мс). Медленный кроссфейд между
+  /// двумя одинаково яркими кадрами читается не как смена сцены, а как
+  /// расфокус — смена должна быть заметной. Основное время отдано чайхане:
+  /// именно её нужно успеть разглядеть.
+  ///
+  /// Пауза в начале (~400 мс) нужна, чтобы стык с нативной заставкой
+  /// прочитался как одна картинка, а не как мгновенный перескок.
+  static const fadeBegin = 0.18;
+  static const fadeEnd = 0.36;
+
+  /// Насколько наезжает камера за всю заставку. Едва заметно — движение
+  /// должно читаться как «живой кадр», а не как зум.
+  static const zoomTo = 1.06;
+
+  /// Ключи анимируемых слоёв: во внутреннем дереве Flutter есть и свои
+  /// Transform, и свои FadeTransition (их создаёт Image при загрузке),
+  /// поэтому тесту нужно попадать именно в наши.
+  static const zoomKey = ValueKey('splash-zoom');
+  static const fadeKey = ValueKey('splash-fade');
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  VideoPlayerController? _controller;
-  Timer? _failsafe;
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _zoom;
+  late final Animation<double> _teahouseOpacity;
   bool _finished = false;
+  bool _preloaded = false;
 
   @override
   void initState() {
     super.initState();
-    _failsafe = Timer(SplashScreen.maxDuration, _finish);
-    _start();
+    _controller = AnimationController(vsync: this, duration: SplashScreen.duration);
+    _zoom = Tween<double>(begin: 1, end: SplashScreen.zoomTo)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _teahouseOpacity = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(SplashScreen.fadeBegin, SplashScreen.fadeEnd, curve: Curves.easeInOut),
+    );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _finish();
+    });
+    // Стартуем сразу, не дожидаясь декодирования второй сцены: заставка
+    // должна начаться мгновенно. Переход стартует только на fadeBegin
+    // (~450 мс), к этому моменту картинка уже прогрета — см.
+    // didChangeDependencies.
+    _controller.forward();
   }
 
-  Future<void> _start() async {
-    final controller = VideoPlayerController.asset('assets/branding/launch.mp4');
-    try {
-      await controller.initialize();
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      // Без звука: заставка не должна перебивать музыку, которую пользователь
-      // уже слушает. Со звуком пришлось бы отдельно настраивать iOS
-      // audio-session, иначе система остановит чужое воспроизведение.
-      await controller.setVolume(0);
-      controller.addListener(_onTick);
-      // Перезапускаем страховочный таймер на реальную длительность ролика —
-      // теперь она известна. Бюджет ожидания загрузки выше не был рассчитан
-      // ещё и на проигрывание, и на холодном старте обрывал видео на середине.
-      _failsafe?.cancel();
-      _failsafe = Timer(controller.value.duration + SplashScreen.playbackGrace, _finish);
-      setState(() => _controller = controller);
-      await controller.play();
-    } catch (_) {
-      // Видео не открылось (нет кодека, битый файл, нет плагина) — не
-      // показываем ошибку, просто пропускаем заставку и пускаем в приложение.
-      await controller.dispose();
-      _finish();
-    }
-  }
-
-  void _onTick() {
-    final controller = _controller;
-    if (controller == null || !controller.value.isInitialized) return;
-    if (controller.value.hasError) {
-      _finish();
-      return;
-    }
-    if (controller.value.position >= controller.value.duration) _finish();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_preloaded) return;
+    _preloaded = true;
+    // Греем вторую сцену параллельно с началом заставки, чтобы к моменту
+    // fadeBegin она была уже декодирована и растворение не дёрнулось.
+    // Ошибку глотаем намеренно: заставка обязана доиграть и пустить дальше
+    // даже если картинка не загрузилась.
+    precacheImage(const AssetImage(SplashScreen.teahouseAsset), context).catchError((Object _) {});
   }
 
   void _finish() {
-    // Проверка `mounted` здесь принципиальна: и страховочный таймер, и
-    // асинхронная инициализация видео могут сработать уже после того, как
-    // экран убран с навигации, а onFinished выполняет переход через context.
+    // Проверка `mounted` важна: колбэк анимации может прийти уже после того,
+    // как экран убран с навигации, а onFinished выполняет переход через
+    // context.
     if (_finished || !mounted) return;
     _finished = true;
-    _failsafe?.cancel();
     widget.onFinished();
   }
 
   @override
   void dispose() {
-    _failsafe?.cancel();
-    _controller?.removeListener(_onTick);
-    _controller?.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = _controller;
     return Scaffold(
       backgroundColor: SplashScreen.backgroundColor,
       body: GestureDetector(
-        // Тап в любом месте пропускает заставку — ролик идёт 6 секунд, это
-        // долго, если открываешь приложение второй раз подряд.
         onTap: _finish,
         behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: controller == null || !controller.value.isInitialized
-              // Пока не декодирован первый кадр, держим ту же картинку, что
-              // показывала нативная заставка — чтобы между ними не мелькал
-              // чёрный экран.
-              //
-              // Это splash_full.png (704x1520) и BoxFit.cover — ровно то же,
-              // что делает нативная заставка с ios_content_mode:
-              // scaleAspectFill. Пропорции картинки (0.463) совпадают с
-              // экраном, поэтому cover закрывает его целиком, ничего не
-              // обрезая, и передача «нативная заставка -> Flutter» проходит
-              // без изменения размера.
-              //
-              // ВНИМАНИЕ: само видео пока 464x656 и показывается с полями
-              // (BoxFit.contain ниже), поэтому в момент старта ролика размер
-              // всё же меняется. Уйдёт, когда ролик перегенерируют под 9:19.5.
-              ? SizedBox.expand(
-                  child: Image.asset('assets/branding/splash_full.png', fit: BoxFit.cover),
-                )
-              : AspectRatio(
-                  aspectRatio: controller.value.aspectRatio,
-                  child: VideoPlayer(controller),
+        // ClipRect не даёт увеличенной картинке вылезти за пределы экрана.
+        child: ClipRect(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) => Transform.scale(
+              key: SplashScreen.zoomKey,
+              scale: _zoom.value,
+              child: child,
+            ),
+            // Дерево строится один раз и переиспользуется на каждом кадре:
+            // меняются только матрица масштаба и прозрачность, декодировать
+            // картинки заново не нужно.
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(SplashScreen.silkAsset, fit: BoxFit.cover),
+                FadeTransition(
+                  key: SplashScreen.fadeKey,
+                  opacity: _teahouseOpacity,
+                  child: Image.asset(SplashScreen.teahouseAsset, fit: BoxFit.cover),
                 ),
+              ],
+            ),
+          ),
         ),
       ),
     );

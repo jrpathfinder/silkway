@@ -38,10 +38,6 @@ dependencies:
   # Payment checkout
   webview_flutter: ^4.9.0
 
-  # Брендовый ролик-заставка при запуске (см. SplashScreen).
-  # Нативная заставка ниже показать видео не может — только картинку,
-  # поэтому ролик проигрывается уже средствами Flutter.
-  video_player: ^2.14.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

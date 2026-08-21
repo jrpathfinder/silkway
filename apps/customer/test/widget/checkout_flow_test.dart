@@ -69,9 +69,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Payment webview screen (mock mode) auto-advances to the order status.
-      expect(find.textContaining('Заказ'), findsWidgets);
-      expect(find.text('Оплачен'), findsOneWidget);
-      expect(find.text('Самса с бараниной × 1'), findsOneWidget);
+      // Статус встречается дважды: крупным заголовком и этапом в таймлайне.
+      expect(find.text('Оплачен'), findsNWidgets(2));
+      expect(find.text('Состав'), findsOneWidget);
+      // Количество теперь отдельной колонкой, поэтому название ищем само по
+      // себе, а не строкой «Самса × 1».
+      expect(find.text('Самса с бараниной'), findsOneWidget);
+      expect(find.text('1×'), findsOneWidget);
     },
   );
 }

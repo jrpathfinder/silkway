@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:silkway_app/features/cart/presentation/cart_screen.dart';
 import 'package:silkway_app/features/catalog/presentation/home_screen.dart';
+import 'package:silkway_app/features/catalog/presentation/item_detail_sheet.dart';
 
 import '../helpers/pump_helpers.dart';
 
 Future<void> _pumpApp(WidgetTester tester) => pumpAppPastSplash(tester);
+
+/// Кнопки «+»/«−» есть и на карточках меню, и в степпере, а вкладки живут в
+/// IndexedStack и не выгружаются при переключении — поэтому поиск по иконке
+/// нужно ограничивать конкретным экраном.
+Finder _inside(Type screen, IconData icon) =>
+    find.descendant(of: find.byType(screen), matching: find.byIcon(icon));
 
 /// Меню теперь разбито на разделы по категориям, и списки внутри ленивые:
 /// блюдо из второго раздела просто не существует в дереве, пока до него не
@@ -49,7 +57,7 @@ void main() {
     expect(find.textContaining('Рис, мясо, морковь'), findsAtLeastNWidgets(1));
 
     // Bump quantity to 2 and select the modifier.
-    await tapAndSettle(tester, find.byIcon(Icons.add));
+    await tapAndSettle(tester, _inside(ItemDetailSheet, Icons.add_rounded));
     // Модификатор — своя строка вместо CheckboxListTile: тапаем по названию,
     // вся строка кликабельна.
     await tapAndSettle(tester, find.text('Дополнительное мясо'));
@@ -64,15 +72,15 @@ void main() {
     expect(find.text('Товаров: 2'), findsOneWidget);
 
     // Increment then decrement twice back to zero, which removes the line.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(_inside(CartScreen, Icons.add_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Товаров: 3'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(_inside(CartScreen, Icons.remove_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(_inside(CartScreen, Icons.remove_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(_inside(CartScreen, Icons.remove_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Корзина пуста'), findsOneWidget);
@@ -92,7 +100,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Самса с бараниной'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.tap(_inside(CartScreen, Icons.delete_outline));
     await tester.pumpAndSettle();
 
     expect(find.text('Корзина пуста'), findsOneWidget);

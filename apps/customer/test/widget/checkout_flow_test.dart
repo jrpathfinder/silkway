@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:silkway_app/features/catalog/presentation/home_screen.dart';
+
 import '../helpers/pump_helpers.dart';
 
 void main() {
@@ -10,6 +12,18 @@ void main() {
       await pumpAppPastSplash(tester);
 
       // Add an item and go to the cart.
+      // «Самса» лежит во втором разделе меню, до неё нужно доскроллить:
+      // списки разделов ленивые.
+      await tester.scrollUntilVisible(
+        find.text('Самса с бараниной'),
+        200,
+        scrollable: find.descendant(
+          of: find.byKey(HomeScreen.menuListKey),
+          matching: find.byType(Scrollable),
+        ).first,
+      );
+      await tester.ensureVisible(find.text('Самса с бараниной'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Самса с бараниной'));
       await tester.pumpAndSettle();
       await tapAndSettle(tester, find.text('Добавить в корзину'));

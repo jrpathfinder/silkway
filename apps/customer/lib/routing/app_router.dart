@@ -10,6 +10,7 @@ import '../features/auth/presentation/phone_entry_screen.dart';
 import '../features/cart/presentation/cart_badge.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/catalog/presentation/home_screen.dart';
+import '../features/catalog/presentation/search_screen.dart';
 import '../features/courier/presentation/courier_home_screen.dart';
 import '../features/loyalty/presentation/promotions_screen.dart';
 import '../features/orders/presentation/checkout_screen.dart';
@@ -56,6 +57,12 @@ GoRouter _buildCustomerRouter(Ref ref) {
             GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
           ]),
         ],
+      ),
+      // Поиск открывается поверх вкладок (push), а не как отдельная вкладка:
+      // возврат должен приводить ровно туда, откуда пришли.
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
         path: '/promotions',

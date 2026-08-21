@@ -74,6 +74,15 @@ flutter_native_splash:
   color: "#2A211A"
   image: assets/branding/splash.png
   fullscreen: true
+  # Без этой строки imageView получает contentMode="center" и рисует картинку
+  # в натуральном размере: пакет считает исходник за @4x и ужимает его вчетверо
+  # (464x656 -> 348x492 px = 116x164 pt), из-за чего на экране появлялся
+  # маленький прямоугольник по центру.
+  #
+  # scaleAspectFit растягивает на всю ширину, сохраняя пропорции — ровно так же
+  # показывается и видео (BoxFit.contain в SplashScreen), поэтому переход
+  # «нативная заставка -> видео» происходит без скачка размера.
+  ios_content_mode: scaleAspectFit
   android_12:
     color: "#2A211A"
     image: assets/branding/splash.png

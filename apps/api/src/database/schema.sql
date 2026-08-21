@@ -51,7 +51,7 @@ insert into city (id, name, timezone) values ('moscow', 'Москва', 'Europe/
 on conflict (id) do nothing;
 
 insert into restaurant_location (id, brand_id, city_id, name, address)
-values ('ca-moscow-1', 'central-asia', 'moscow', 'Central Asia Restaurant — Москва', 'Москва, адрес будет указан при запуске')
+values ('ca-moscow-1', 'central-asia', 'moscow', 'Шелковый путь — Москва', 'Москва, адрес будет указан при запуске')
 on conflict (id) do nothing;
 
 insert into catalog_category (id, name, sort_order) values

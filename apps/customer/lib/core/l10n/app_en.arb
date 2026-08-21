@@ -1,0 +1,19 @@
+{
+  "@@locale": "en",
+  "appTitle": "Silkway",
+  "navMenu": "Menu",
+  "navCart": "Cart",
+  "navProfile": "Profile",
+  "authPhoneTitle": "Sign in",
+  "authPhonePrompt": "Enter your phone number",
+  "authPhoneLabel": "Phone",
+  "authPhoneNext": "Next",
+  "authOtpTitle": "Verification code",
+  "authOtpSentTo": "Code sent to {phone}",
+  "authOtpLabel": "SMS code",
+  "authOtpConfirm": "Confirm",
+  "authOtpInvalid": "Invalid code",
+  "cartEmpty": "Your cart is empty",
+  "cartCheckout": "Checkout",
+  "genericError": "Error: {error}"
+}

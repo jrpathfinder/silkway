@@ -11,3 +11,8 @@ coverage/
 *.log
 .DS_Store
 .idea/
+
+# Локальные настройки Claude Code: у каждого разработчика свои разрешения,
+# в репозиторий они не идут. Общие настройки (.claude/settings.json), если
+# появятся, коммитятся как обычно.
+.claude/settings.local.json

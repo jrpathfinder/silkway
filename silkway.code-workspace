@@ -1,0 +1,31 @@
+{
+  // Мультирут: Flutter-клиент отдельной папкой, чтобы расширение Dart
+  // корректно нашло pubspec.yaml, а рядом — бэкенд и админка.
+  "folders": [
+    { "name": "customer (Flutter)", "path": "apps/customer" },
+    { "name": "api (NestJS)", "path": "apps/api" },
+    { "name": "admin", "path": "apps/admin" },
+    { "name": "silkway (корень)", "path": "." }
+  ],
+  "settings": {
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/.dart_tool": true
+    }
+  },
+  "extensions": {
+    // Обязательное — без него не будет ни подсветки Dart, ни запуска.
+    // Остальное по стеку: контейнеры для infra/, редактор .arb для переводов.
+    // ESLint/Prettier намеренно не рекомендуем: конфигов линтеров в проекте
+    // нет, работать им не с чем.
+    "recommendations": [
+      "dart-code.flutter",
+      "dart-code.dart-code",
+      "ms-azuretools.vscode-docker",
+      "google.arb-editor",
+      "usernamehw.errorlens"
+    ]
+  }
+}

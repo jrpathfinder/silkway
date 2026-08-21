@@ -1,5 +1,5 @@
-name: central_asia_customer
-description: Customer delivery app for Central Asia Restaurant.
+name: silkway_app
+description: Silkway customer and courier delivery app (Central Asia Restaurant, Moscow).
 publish_to: none
 version: 0.1.0+1
 environment:
@@ -7,10 +7,93 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Networking
+  dio: ^5.5.0
+
+  # Models / serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # Identifiers
+  uuid: ^4.5.0
+
+  # Localization
+  intl: ^0.20.3
+
+  # Payment checkout
+  webview_flutter: ^4.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.3
+  flutter_native_splash: ^2.4.1
+  flutter_launcher_icons: ^0.14.4
 flutter:
   uses-material-design: true
+  generate: true
+  assets:
+    - assets/branding/
+    - assets/branding/dishes/
+
+# ПЕРВАЯ (нативная) заставка — статичная картинка, которую ОС показывает,
+# пока грузится движок Flutter. Видео здесь невозможно в принципе.
+# Цвет фона совпадает с SplashScreen.backgroundColor.
+# После изменения этой секции нужно перегенерировать:
+#   dart run flutter_native_splash:create
+#
+# splash_full.png — 704x1520, соотношение 0.463 совпадает с экраном iPhone
+# (~0.462), поэтому картинка закрывает экран целиком: ни полей, ни обрезки.
+#
+# ios_content_mode обязателен: по умолчанию пакет ставит contentMode="center",
+# и картинка рисуется в натуральном размере маленьким прямоугольником по
+# центру. scaleAspectFill растягивает её на весь экран.
+#
+# Ключ background_image здесь не подходит — на iOS он генерирует пустую
+# картинку 1x1, экран получается просто залитым цветом.
+flutter_native_splash:
+  color: "#2A211A"
+  image: assets/branding/splash_full.png
+  ios_content_mode: scaleAspectFill
+  fullscreen: true
+  android_12:
+    color: "#2A211A"
+    image: assets/branding/splash.png
+
+# Иконка приложения. Перегенерировать после смены картинки:
+#   dart run flutter_launcher_icons
+#
+# Два исходника не случайно:
+#  - app_icon.png — для iOS, маска там скруглённый квадрат, содержимое
+#    занимает 78% плитки;
+#  - app_icon_adaptive.png — для Android adaptive icon, где система режет
+#    иконку произвольной маской (круг, капля, squircle). Безопасная зона
+#    ~66%, поэтому содержимое ужато до 55%, иначе обрежет края верблюда.
+#
+# remove_alpha_ios обязателен: App Store не принимает иконки с альфа-каналом.
+flutter_launcher_icons:
+  image_path: assets/branding/app_icon.png
+  ios: true
+  remove_alpha_ios: true
+  android: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/branding/app_icon_adaptive.png

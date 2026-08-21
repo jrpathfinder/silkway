@@ -12,6 +12,6 @@ void main() {
     );
 
     expect(find.text('Заказы'), findsOneWidget);
-    expect(find.text('Пока нет предложений заказов'), findsOneWidget);
+    expect(find.text('Пока нет предложений'), findsOneWidget);
   });
 }

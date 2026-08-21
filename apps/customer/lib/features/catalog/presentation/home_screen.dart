@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -217,6 +218,7 @@ class _CatalogBodyState extends ConsumerState<_CatalogBody> {
                       // кнопку не показываем: он всё равно обязателен.
                       onAdd: item.modifiers.isEmpty
                           ? () {
+                              HapticFeedback.mediumImpact();
                               ref
                                   .read(cartNotifierProvider.notifier)
                                   .addItem(widget.locationId, item, quantity: 1);

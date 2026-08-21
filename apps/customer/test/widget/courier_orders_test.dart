@@ -49,7 +49,7 @@ void main() {
   testWidgets('shows an empty state when there are no offered orders', (tester) async {
     await _pumpCourierHome(tester, []);
 
-    expect(find.text('Пока нет предложений заказов'), findsOneWidget);
+    expect(find.text('Пока нет предложений'), findsOneWidget);
   });
 
   testWidgets('lists offered orders with their totals', (tester) async {

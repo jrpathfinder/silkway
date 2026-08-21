@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../tokens/sw_spacing.dart';
 import '../tokens/sw_typography.dart';
@@ -36,7 +37,14 @@ class SwQuantityStepper extends StatelessWidget {
       children: [
         _Button(
           icon: Icons.remove_rounded,
-          onPressed: canDecrement ? onDecrement : null,
+          // selectionClick — самый лёгкий отклик из доступных. Изменение
+          // количества происходит часто, и что-то заметнее быстро надоедает.
+          onPressed: canDecrement
+              ? () {
+                  HapticFeedback.selectionClick();
+                  onDecrement();
+                }
+              : null,
           background: scheme.surfaceContainerHighest,
           foreground: canDecrement ? scheme.onSurface : scheme.outlineVariant,
           tooltip: 'Меньше',
@@ -51,7 +59,10 @@ class SwQuantityStepper extends StatelessWidget {
         ),
         _Button(
           icon: Icons.add_rounded,
-          onPressed: onIncrement,
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            onIncrement();
+          },
           background: scheme.primary,
           foreground: scheme.onPrimary,
           tooltip: 'Больше',

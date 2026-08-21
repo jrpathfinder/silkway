@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/tokens/sw_spacing.dart';
@@ -39,6 +40,9 @@ class _ItemDetailSheetState extends ConsumerState<ItemDetailSheet> {
       widget.item.modifiers.where((m) => _selectedModifierIds.contains(m.id)).fold(0.0, (sum, m) => sum + m.priceRub);
 
   void _add() {
+    // Добавление в корзину — результат осознанного действия, здесь уместен
+    // отклик заметнее, чем при перещёлкивании количества.
+    HapticFeedback.mediumImpact();
     final item = widget.item;
     final modifiers = item.modifiers.where((m) => _selectedModifierIds.contains(m.id)).toList();
     ref.read(cartNotifierProvider.notifier).addItem(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/design_system/widgets/sw_error_state.dart';
 import '../../auth/application/session_notifier.dart';
 
 /// Профиль: вход/выход и переходы в заказы и акции.
@@ -50,8 +51,14 @@ class ProfileScreen extends ConsumerWidget {
                   child: const Text('Войти'),
                 ),
               ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Ошибка: $error')),
+        // Профиль читается из локального хранилища и открывается практически
+        // мгновенно — скелетон тут был бы заметнее самой загрузки.
+        loading: () => const SizedBox.shrink(),
+        error: (error, stack) => SwErrorState(
+          title: 'Не удалось открыть профиль',
+          details: '$error',
+          onRetry: () => ref.invalidate(sessionNotifierProvider),
+        ),
       ),
     );
   }

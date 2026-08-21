@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/widgets/sw_empty_state.dart';
+import '../../../core/design_system/widgets/sw_error_state.dart';
 import '../../../core/utils/money.dart';
 import 'providers/courier_providers.dart';
 
@@ -19,7 +21,11 @@ class CourierHomeScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Заказы')),
       body: offersAsync.when(
         data: (orders) => orders.isEmpty
-            ? const Center(child: Text('Пока нет предложений заказов'))
+            ? const SwEmptyState(
+                icon: Icons.delivery_dining_outlined,
+                title: 'Пока нет предложений',
+                message: 'Новые заказы появятся здесь автоматически.',
+              )
             : ListView.builder(
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
@@ -44,7 +50,11 @@ class CourierHomeScreen extends ConsumerWidget {
                 },
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Ошибка: $error')),
+        error: (error, stack) => SwErrorState(
+          title: 'Не удалось загрузить заказы',
+          details: '$error',
+          onRetry: () => ref.invalidate(offeredOrdersProvider),
+        ),
       ),
     );
   }

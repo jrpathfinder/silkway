@@ -61,7 +61,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Оформление заказа'), findsOneWidget);
-      expect(find.text('Товаров: 1'), findsOneWidget);
+      // Экран показывает состав заказа, а не только количество позиций.
+      expect(find.text('Самса с бараниной'), findsOneWidget);
+      expect(find.text('К оплате'), findsOneWidget);
 
       await tester.tap(find.text('Оплатить'));
       await tester.pumpAndSettle();

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/design_system/tokens/sw_spacing.dart';
+import '../../../core/design_system/tokens/sw_typography.dart';
+import '../../../core/design_system/widgets/sw_sticky_cta_bar.dart';
 import '../../../core/ports/orders_repository.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/idempotency_key_store.dart';
@@ -70,31 +73,76 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartNotifierProvider);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Оформление заказа')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Товаров: ${cart.itemCount}'),
-            const SizedBox(height: 8),
-            Text(
-              'Итого: ${formatRub(cart.totalRub)}',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(SwSpacing.screenH, SwSpacing.md, SwSpacing.screenH, SwSpacing.xl),
+        children: [
+          Text('Заказ', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
+          const SizedBox(height: SwSpacing.md),
+          for (final line in cart.lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: SwSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Количество отдельным столбцом: так строки выравниваются
+                  // по названию, а не пляшут в зависимости от числа.
+                  SizedBox(
+                    width: 32,
+                    child: Text(
+                      '${line.quantity}×',
+                      style: SwTypography.price.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(line.item.name, style: SwTypography.body.copyWith(color: scheme.onSurface)),
+                        if (line.selectedModifiers.isNotEmpty)
+                          Text(
+                            line.selectedModifiers.map((m) => m.name).join(', '),
+                            style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: SwSpacing.sm),
+                  Text(formatRub(line.totalRub), style: SwTypography.price.copyWith(color: scheme.onSurface)),
+                ],
+              ),
             ),
-            const Spacer(),
-            FilledButton(
-              onPressed: _placing ? null : _placeOrder,
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-              child: _placing
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Оплатить'),
-            ),
-          ],
-        ),
+          const Divider(height: SwSpacing.xxl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('К оплате', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
+              Text(formatRub(cart.totalRub), style: SwTypography.priceLarge.copyWith(color: scheme.onSurface)),
+            ],
+          ),
+          const SizedBox(height: SwSpacing.sm),
+          // Честное предупреждение вместо выдуманных строк доставки и сборов:
+          // сервер пересчитывает стоимость по каталогу и клиентским суммам
+          // не доверяет, поэтому итог может отличаться.
+          Text(
+            'Стоимость подтвердит ресторан: цены пересчитываются при создании заказа.',
+            style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
       ),
+      bottomNavigationBar: _placing
+          ? const Padding(
+              padding: EdgeInsets.all(SwSpacing.xl),
+              child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+            )
+          : SwStickyCtaBar(
+              label: 'Оплатить',
+              priceLabel: formatRub(cart.totalRub),
+              onTap: _placeOrder,
+            ),
     );
   }
 }

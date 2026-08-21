@@ -35,7 +35,10 @@ void main() {
     await tester.pump();
 
     final image = tester.widget<Image>(find.byType(Image));
-    expect((image.image as AssetImage).assetName, 'assets/branding/splash.png');
+    // Та же картинка, что показывает нативная заставка (см. pubspec.yaml) —
+    // если пути разойдутся, при передаче управления будет заметный скачок.
+    expect((image.image as AssetImage).assetName, 'assets/branding/splash_full.png');
+    expect(image.fit, BoxFit.cover);
 
     await tester.tap(find.byType(SplashScreen));
     await tester.pumpAndSettle();

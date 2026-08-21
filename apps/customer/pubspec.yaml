@@ -60,29 +60,24 @@ flutter:
 
 # ПЕРВАЯ (нативная) заставка — статичная картинка, которую ОС показывает,
 # пока грузится движок Flutter. Видео здесь невозможно в принципе.
-# splash.png — кадр из launch.mp4, а цвет фона совпадает с
-# SplashScreen.backgroundColor, чтобы переход к видео был незаметным.
+# Цвет фона совпадает с SplashScreen.backgroundColor.
 # После изменения этой секции нужно перегенерировать:
 #   dart run flutter_native_splash:create
 #
-# Generated via `dart run flutter_native_splash:create`.
-# Source: assets/branding/splash.png, a frame from the brand video
-# (Чайхана Шёлковый Путь) — assets/branding/launch.mp4.
-# TODO(design): source art is only 464x656 (low-res video export) — looks
-# soft on high-DPI screens. Swap in a higher-resolution export when available.
+# splash_full.png — 704x1520, соотношение 0.463 совпадает с экраном iPhone
+# (~0.462), поэтому картинка закрывает экран целиком: ни полей, ни обрезки.
+#
+# ios_content_mode обязателен: по умолчанию пакет ставит contentMode="center",
+# и картинка рисуется в натуральном размере маленьким прямоугольником по
+# центру. scaleAspectFill растягивает её на весь экран.
+#
+# Ключ background_image здесь не подходит — на iOS он генерирует пустую
+# картинку 1x1, экран получается просто залитым цветом.
 flutter_native_splash:
   color: "#2A211A"
-  image: assets/branding/splash.png
+  image: assets/branding/splash_full.png
+  ios_content_mode: scaleAspectFill
   fullscreen: true
-  # Без этой строки imageView получает contentMode="center" и рисует картинку
-  # в натуральном размере: пакет считает исходник за @4x и ужимает его вчетверо
-  # (464x656 -> 348x492 px = 116x164 pt), из-за чего на экране появлялся
-  # маленький прямоугольник по центру.
-  #
-  # scaleAspectFit растягивает на всю ширину, сохраняя пропорции — ровно так же
-  # показывается и видео (BoxFit.contain в SplashScreen), поэтому переход
-  # «нативная заставка -> видео» происходит без скачка размера.
-  ios_content_mode: scaleAspectFit
   android_12:
     color: "#2A211A"
     image: assets/branding/splash.png

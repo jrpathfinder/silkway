@@ -16,10 +16,10 @@ class DishImage extends StatelessWidget {
   final String? imageUrl;
   final BorderRadius? borderRadius;
 
-  /// Cards want a cropped, edge-to-edge fill (the default); the item-detail
-  /// header wants the full plated photo visible on white, like the "Империя
-  /// Пиццы" reference — pass [BoxFit.contain] with [backgroundColor] white
-  /// for that case.
+  /// Карточкам в списке нужна обрезанная заливка «под край» — это значение
+  /// по умолчанию ([BoxFit.cover]). Шапке карточки блюда нужно, наоборот,
+  /// видеть тарелку целиком на белом фоне (референс «Империя Пиццы») — для
+  /// этого передаём [BoxFit.contain] и белый [backgroundColor].
   final BoxFit fit;
   final Color? backgroundColor;
 

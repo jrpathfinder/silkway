@@ -9,8 +9,9 @@ import '../../../core/models/catalog.dart';
 import '../../../core/utils/money.dart';
 import '../../cart/application/cart_notifier.dart';
 
-/// The item-detail bottom sheet from the design reference: modifier
-/// checkboxes, quantity stepper, sticky "Add to cart {price}" CTA.
+/// Нижняя шторка с карточкой блюда (по референсу «Империя Пиццы»):
+/// белая карточка с фото и крупной ценой, чекбоксы модификаторов,
+/// счётчик количества и кнопка «Добавить в корзину {цена}» внизу.
 class ItemDetailSheet extends ConsumerStatefulWidget {
   const ItemDetailSheet({super.key, required this.item, required this.locationId});
 
@@ -32,14 +33,18 @@ class _ItemDetailSheetState extends ConsumerState<ItemDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
-    // showSwBottomSheet's showModalBottomSheet(isScrollControlled: true) asks
-    // this subtree "how tall do you want to be" with an *unbounded* height so
-    // it can size the sheet to content — which means a SingleChildScrollView
-    // given those same unbounded constraints never activates scrolling, it
-    // just reports its full natural height and gets silently clipped by the
-    // sheet's own max-height clamp. Capping the height here first gives the
-    // scroll view a real bound to work with, so a tall photo, long
-    // description, or several modifiers scrolls instead of getting cut off.
+    // ConstrainedBox здесь обязателен, и вот почему.
+    //
+    // showSwBottomSheet вызывает showModalBottomSheet(isScrollControlled:
+    // true) — тот спрашивает у содержимого «какой ты высоты?», передавая
+    // НЕОГРАНИЧЕННУЮ высоту, чтобы подогнать шторку под контент. В таких
+    // условиях SingleChildScrollView никогда не включает прокрутку: он просто
+    // сообщает свою полную натуральную высоту, а лишнее потом молча
+    // обрезается ограничением высоты самой шторки.
+    //
+    // Ограничивая высоту здесь, мы даём прокрутке реальную границу — и
+    // высокое фото, длинное описание или несколько модификаторов
+    // прокручиваются, а не срезаются.
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
       child: Padding(

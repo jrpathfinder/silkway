@@ -16,6 +16,16 @@
     }
   },
   "extensions": {
-    "recommendations": ["dart-code.flutter", "dart-code.dart-code"]
+    // Обязательное — без него не будет ни подсветки Dart, ни запуска.
+    // Остальное по стеку: контейнеры для infra/, редактор .arb для переводов.
+    // ESLint/Prettier намеренно не рекомендуем: конфигов линтеров в проекте
+    // нет, работать им не с чем.
+    "recommendations": [
+      "dart-code.flutter",
+      "dart-code.dart-code",
+      "ms-azuretools.vscode-docker",
+      "google.arb-editor",
+      "usernamehw.errorlens"
+    ]
   }
 }

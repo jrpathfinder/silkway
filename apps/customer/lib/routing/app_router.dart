@@ -17,17 +17,21 @@ import '../features/orders/presentation/order_history_screen.dart';
 import '../features/orders/presentation/order_status_screen.dart';
 import '../features/payments/presentation/payment_webview_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
+import '../features/splash/application/splash_gate.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import 'route_guards.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final flavor = ref.watch(envProvider).flavor;
-  return flavor == AppFlavor.courier ? _buildCourierRouter() : _buildCustomerRouter(ref);
+  return flavor == AppFlavor.courier ? _buildCourierRouter(ref) : _buildCustomerRouter(ref);
 });
 
 GoRouter _buildCustomerRouter(Ref ref) {
+  // На повторных холодных запусках заставку пропускаем и открываем меню
+  // сразу — см. SplashGate.
+  final showSplash = ref.watch(showSplashProvider);
   return GoRouter(
-    initialLocation: '/splash',
+    initialLocation: showSplash ? '/splash' : '/',
     redirect: (context, state) => checkoutRedirectGuard(ref, state),
     routes: [
       // Заставка — стартовый маршрут обоих флейворов. Внутри `go`, а не
@@ -86,9 +90,10 @@ GoRouter _buildCustomerRouter(Ref ref) {
   );
 }
 
-GoRouter _buildCourierRouter() {
+GoRouter _buildCourierRouter(Ref ref) {
+  final showSplash = ref.watch(showSplashProvider);
   return GoRouter(
-    initialLocation: '/splash',
+    initialLocation: showSplash ? '/splash' : '/courier',
     routes: [
       // Та же заставка для курьерского флейвора, но выход — на /courier.
       GoRoute(

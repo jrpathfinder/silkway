@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silkway_app/app/app.dart';
 import 'package:silkway_app/core/env/env.dart';
+import 'package:silkway_app/features/splash/application/splash_gate.dart';
 import 'package:silkway_app/features/splash/presentation/splash_screen.dart';
 
 import 'fakes.dart';
@@ -15,8 +16,11 @@ import 'fakes.dart';
 /// полагаться на поведение видео-контроллера без платформы, тест использует
 /// штатный пропуск по тапу — ровно то же, что делает торопящийся
 /// пользователь.
-Future<void> pumpAppPastSplash(WidgetTester tester, {Env env = testMockEnv}) async {
-  await tester.pumpWidget(ProviderScope(overrides: testOverrides(env: env), child: const SilkwayApp()));
+Future<void> pumpAppPastSplash(WidgetTester tester, {Env env = testMockEnv, bool showSplash = true}) async {
+  await tester.pumpWidget(ProviderScope(
+    overrides: [...testOverrides(env: env), showSplashProvider.overrideWithValue(showSplash)],
+    child: const SilkwayApp(),
+  ));
   await tester.pump();
 
   final splash = find.byType(SplashScreen);

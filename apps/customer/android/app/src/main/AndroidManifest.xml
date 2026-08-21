@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="silkway_app"
+        android:label="Шелковый путь"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

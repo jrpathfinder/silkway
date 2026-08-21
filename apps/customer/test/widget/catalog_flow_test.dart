@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:silkway_app/app/app.dart';
 
-import '../helpers/fakes.dart';
 import '../helpers/pump_helpers.dart';
 
-Future<void> _pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(ProviderScope(overrides: testOverrides(), child: const SilkwayApp()));
-  await tester.pumpAndSettle();
-}
+Future<void> _pumpApp(WidgetTester tester) => pumpAppPastSplash(tester);
 
 void main() {
   testWidgets('browsing, adding to cart, and editing the cart line', (tester) async {

@@ -1,5 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:silkway_app/app/app.dart';
+import 'package:silkway_app/core/env/env.dart';
+import 'package:silkway_app/features/splash/presentation/splash_screen.dart';
+
+import 'fakes.dart';
+
+/// Запускает приложение и пропускает брендовую видео-заставку, оставляя на
+/// экране первый «настоящий» экран.
+///
+/// Оба флейвора теперь стартуют со [SplashScreen] (см. app_router.dart), а у
+/// video_player нет реализации под `flutter test`. Поэтому вместо того чтобы
+/// полагаться на поведение видео-контроллера без платформы, тест использует
+/// штатный пропуск по тапу — ровно то же, что делает торопящийся
+/// пользователь.
+Future<void> pumpAppPastSplash(WidgetTester tester, {Env env = testMockEnv}) async {
+  await tester.pumpWidget(ProviderScope(overrides: testOverrides(env: env), child: const SilkwayApp()));
+  await tester.pump();
+
+  final splash = find.byType(SplashScreen);
+  if (splash.evaluate().isNotEmpty) {
+    await tester.tap(splash);
+  }
+  await tester.pumpAndSettle();
+}
 
 /// Scrolls [finder] into view if it sits inside a Scrollable (the item-detail
 /// sheet's content can be taller than the test viewport — see

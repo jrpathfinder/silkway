@@ -37,6 +37,11 @@ dependencies:
 
   # Payment checkout
   webview_flutter: ^4.9.0
+
+  # Брендовый ролик-заставка при запуске (см. SplashScreen).
+  # Нативная заставка ниже показать видео не может — только картинку,
+  # поэтому ролик проигрывается уже средствами Flutter.
+  video_player: ^2.14.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -53,9 +58,16 @@ flutter:
     - assets/branding/
     - assets/branding/dishes/
 
+# ПЕРВАЯ (нативная) заставка — статичная картинка, которую ОС показывает,
+# пока грузится движок Flutter. Видео здесь невозможно в принципе.
+# splash.png — кадр из launch.mp4, а цвет фона совпадает с
+# SplashScreen.backgroundColor, чтобы переход к видео был незаметным.
+# После изменения этой секции нужно перегенерировать:
+#   dart run flutter_native_splash:create
+#
 # Generated via `dart run flutter_native_splash:create`.
 # Source: assets/branding/splash.png, a frame from the brand video
-# (Чайхана Шёлковый Путь) at generated_video.mp4 in the repo root.
+# (Чайхана Шёлковый Путь) — assets/branding/launch.mp4.
 # TODO(design): source art is only 464x656 (low-res video export) — looks
 # soft on high-DPI screens. Swap in a higher-resolution export when available.
 flutter_native_splash:

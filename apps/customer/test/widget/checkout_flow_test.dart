@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:silkway_app/app/app.dart';
 
-import '../helpers/fakes.dart';
 import '../helpers/pump_helpers.dart';
 
 void main() {
   testWidgets(
     'unauthenticated checkout is gated behind phone+OTP, then completes to an order status',
     (tester) async {
-      await tester.pumpWidget(ProviderScope(overrides: testOverrides(), child: const SilkwayApp()));
-      await tester.pumpAndSettle();
+      await pumpAppPastSplash(tester);
 
       // Add an item and go to the cart.
       await tester.tap(find.text('Самса с бараниной'));

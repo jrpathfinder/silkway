@@ -17,6 +17,7 @@ import '../features/orders/presentation/order_history_screen.dart';
 import '../features/orders/presentation/order_status_screen.dart';
 import '../features/payments/presentation/payment_webview_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
+import '../features/splash/presentation/splash_screen.dart';
 import 'route_guards.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -26,9 +27,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 GoRouter _buildCustomerRouter(Ref ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     redirect: (context, state) => checkoutRedirectGuard(ref, state),
     routes: [
+      // Заставка — стартовый маршрут обоих флейворов. Внутри `go`, а не
+      // `push`: экран не должен оставаться в стеке навигации, иначе кнопка
+      // «Назад» на Android с главного экрана проигрывала бы ролик заново.
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => SplashScreen(onFinished: () => context.go('/')),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _CustomerShell(shell: shell),
         branches: [
@@ -80,8 +88,13 @@ GoRouter _buildCustomerRouter(Ref ref) {
 
 GoRouter _buildCourierRouter() {
   return GoRouter(
-    initialLocation: '/courier',
+    initialLocation: '/splash',
     routes: [
+      // Та же заставка для курьерского флейвора, но выход — на /courier.
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => SplashScreen(onFinished: () => context.go('/courier')),
+      ),
       GoRoute(path: '/courier', builder: (context, state) => const CourierHomeScreen()),
     ],
   );

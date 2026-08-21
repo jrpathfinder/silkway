@@ -10,7 +10,7 @@ class LocationsRepositoryMock implements LocationsRepository {
     RestaurantLocation(
       id: 'ca-moscow-1',
       cityId: 'moscow',
-      name: 'Central Asia Restaurant — Москва (Центр)',
+      name: 'Шелковый путь — Москва (Центр)',
       address: 'Москва, адрес будет указан при запуске',
       timezone: 'Europe/Moscow',
       isActive: true,
@@ -18,7 +18,7 @@ class LocationsRepositoryMock implements LocationsRepository {
     RestaurantLocation(
       id: 'ca-moscow-2',
       cityId: 'moscow',
-      name: 'Central Asia Restaurant — Москва (Юг)',
+      name: 'Шелковый путь — Москва (Юг)',
       address: 'Москва, адрес будет указан при запуске',
       timezone: 'Europe/Moscow',
       isActive: true,

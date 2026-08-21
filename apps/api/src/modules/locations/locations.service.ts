@@ -15,7 +15,7 @@ export class LocationsService {
     {
       id: 'ca-moscow-1',
       cityId: 'moscow',
-      name: 'Central Asia Restaurant — Москва',
+      name: 'Шелковый путь — Москва',
       address: 'Москва, адрес будет указан при запуске',
       timezone: 'Europe/Moscow',
       isActive: true,

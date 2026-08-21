@@ -32,7 +32,7 @@ class HomeScreen extends ConsumerWidget {
         title: locationsAsync.maybeWhen(
           data: (locations) {
             final selected = locations.where((l) => l.id == selectedLocationId);
-            final name = selected.isNotEmpty ? selected.first.name : 'Silkway';
+            final name = selected.isNotEmpty ? selected.first.name : 'Шелковый путь';
             return InkWell(
               onTap: () => showLocationPicker(context, ref),
               child: Row(
@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             );
           },
-          orElse: () => const Text('Silkway'),
+          orElse: () => const Text('Шелковый путь'),
         ),
       ),
       body: selectedLocationId == null

@@ -47,6 +47,7 @@ dev_dependencies:
   json_serializable: ^6.8.0
   riverpod_generator: ^2.4.3
   flutter_native_splash: ^2.4.1
+  flutter_launcher_icons: ^0.14.4
 flutter:
   uses-material-design: true
   generate: true
@@ -77,3 +78,22 @@ flutter_native_splash:
   android_12:
     color: "#2A211A"
     image: assets/branding/splash.png
+
+# Иконка приложения. Перегенерировать после смены картинки:
+#   dart run flutter_launcher_icons
+#
+# Два исходника не случайно:
+#  - app_icon.png — для iOS, маска там скруглённый квадрат, содержимое
+#    занимает 78% плитки;
+#  - app_icon_adaptive.png — для Android adaptive icon, где система режет
+#    иконку произвольной маской (круг, капля, squircle). Безопасная зона
+#    ~66%, поэтому содержимое ужато до 55%, иначе обрежет края верблюда.
+#
+# remove_alpha_ios обязателен: App Store не принимает иконки с альфа-каналом.
+flutter_launcher_icons:
+  image_path: assets/branding/app_icon.png
+  ios: true
+  remove_alpha_ios: true
+  android: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/branding/app_icon_adaptive.png

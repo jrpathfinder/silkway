@@ -1,0 +1,36 @@
+{
+  // Точек входа две, и ни одна не называется lib/main.dart — расширение Dart
+  // по умолчанию ищет именно его и без этих конфигов запуск по F5 падает.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Покупатель (моки)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_customer.dart",
+      "args": ["--dart-define=USE_MOCKS=true"]
+    },
+    {
+      "name": "Покупатель (реальный API)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_customer.dart",
+      // Бэкенд должен быть запущен: npm --workspace apps/api run start:dev
+      "args": ["--dart-define=USE_MOCKS=false", "--dart-define=API_BASE_URL=http://localhost:3000"]
+    },
+    {
+      "name": "Курьер (моки)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_courier.dart",
+      "args": ["--dart-define=USE_MOCKS=true"]
+    },
+    {
+      "name": "Покупатель — release (для замеров скорости)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_customer.dart",
+      "flutterMode": "release"
+    }
+  ]
+}

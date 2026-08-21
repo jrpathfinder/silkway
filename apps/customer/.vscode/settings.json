@@ -1,0 +1,18 @@
+{
+  // build/ — почти 900 сгенерированных файлов, в поиске они только мешают.
+  "search.exclude": {
+    "**/build": true,
+    "**/.dart_tool": true,
+    "**/ios/Pods": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.dart_tool/**": true
+  },
+  // Совпадает с тем, как отформатирован существующий код.
+  "dart.lineLength": 120,
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.rulers": [120]
+  }
+}

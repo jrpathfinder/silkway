@@ -1,0 +1,21 @@
+{
+  // Мультирут: Flutter-клиент отдельной папкой, чтобы расширение Dart
+  // корректно нашло pubspec.yaml, а рядом — бэкенд и админка.
+  "folders": [
+    { "name": "customer (Flutter)", "path": "apps/customer" },
+    { "name": "api (NestJS)", "path": "apps/api" },
+    { "name": "admin", "path": "apps/admin" },
+    { "name": "silkway (корень)", "path": "." }
+  ],
+  "settings": {
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/.dart_tool": true
+    }
+  },
+  "extensions": {
+    "recommendations": ["dart-code.flutter", "dart-code.dart-code"]
+  }
+}

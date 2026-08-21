@@ -56,6 +56,10 @@ class SilkwayApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       title: 'Silkway',
       theme: AppTheme.light(),
+      // Тёмная тема раньше не поддерживалась вовсе. themeMode.system — берём
+      // выбор пользователя из настроек iOS, а не навязываем свой.
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       routerConfig: router,
       locale: const Locale('ru'),
       supportedLocales: AppLocalizations.supportedLocales,

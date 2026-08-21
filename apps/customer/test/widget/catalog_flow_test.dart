@@ -50,7 +50,9 @@ void main() {
 
     // Bump quantity to 2 and select the modifier.
     await tapAndSettle(tester, find.byIcon(Icons.add));
-    await tapAndSettle(tester, find.byType(CheckboxListTile));
+    // Модификатор — своя строка вместо CheckboxListTile: тапаем по названию,
+    // вся строка кликабельна.
+    await tapAndSettle(tester, find.text('Дополнительное мясо'));
     await tapAndSettle(tester, find.text('Добавить в корзину'));
 
     // Switch to the cart tab.

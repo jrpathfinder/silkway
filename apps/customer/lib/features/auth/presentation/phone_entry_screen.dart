@@ -5,6 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/gen/app_localizations.dart';
 import '../application/session_notifier.dart';
 
+/// Ввод телефона — первый шаг входа по SMS-коду.
+///
+/// `returnTo` хранит адрес, куда вернуть пользователя после успешного входа:
+/// на экран входа обычно попадают не сами по себе, а с гейта на оформлении.
 class PhoneEntryScreen extends ConsumerStatefulWidget {
   const PhoneEntryScreen({super.key, this.returnTo});
 

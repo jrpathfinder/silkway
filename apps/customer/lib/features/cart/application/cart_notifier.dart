@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/catalog.dart';
 import '../domain/cart.dart';
 
+/// Корзина в памяти.
+///
+/// Строки с одинаковым блюдом и одинаковым набором модификаторов
+/// объединяются; количество <= 0 удаляет строку.
 class CartNotifier extends Notifier<Cart> {
   @override
   Cart build() => const Cart();

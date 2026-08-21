@@ -6,6 +6,9 @@ import '../../../core/design_system/widgets/sw_toast.dart';
 import '../../../core/l10n/gen/app_localizations.dart';
 import '../application/session_notifier.dart';
 
+/// Ввод кода из SMS — второй шаг входа.
+///
+/// В моках и в dev-режиме бэкенда подходит код `0000`.
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   const OtpVerifyScreen({super.key, required this.phone, this.returnTo});
 

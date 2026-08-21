@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/cart_notifier.dart';
 
+/// Счётчик товаров поверх иконки корзины в нижней навигации.
+/// Прячется, когда корзина пуста.
 class CartBadge extends ConsumerWidget {
   const CartBadge({super.key, required this.child});
 

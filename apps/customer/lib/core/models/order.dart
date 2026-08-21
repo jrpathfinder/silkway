@@ -1,3 +1,6 @@
+/// Заказ и его статус.
+///
+/// Статус на проводе приходит в SCREAMING_SNAKE_CASE, отсюда [fromWire].
 enum OrderStatus {
   pendingPayment,
   paid,

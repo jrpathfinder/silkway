@@ -4,6 +4,10 @@ import '../../../core/models/order.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/ports/orders_repository.dart';
 
+/// Заказы через бэкенд.
+///
+/// Создание и получение по id работают; список заказов покупателя — нет,
+/// роут для него на бэкенде не заведён.
 class OrdersRepositoryHttp implements OrdersRepository {
   OrdersRepositoryHttp(this._client);
 

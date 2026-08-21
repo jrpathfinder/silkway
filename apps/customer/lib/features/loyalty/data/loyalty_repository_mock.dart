@@ -1,6 +1,7 @@
 import '../../../core/models/loyalty.dart';
 import '../../../core/ports/loyalty_repository.dart';
 
+/// Мок акций. Реального модуля лояльности на бэкенде нет.
 class LoyaltyRepositoryMock implements LoyaltyRepository {
   @override
   Future<List<LoyaltyPromotion>> listPromotions() async {

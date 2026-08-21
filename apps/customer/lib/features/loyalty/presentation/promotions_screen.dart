@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design_system/widgets/sw_promo_banner.dart';
 import 'providers/loyalty_providers.dart';
 
+/// Список акций. Пока только на моках: модуля лояльности на бэкенде нет.
 class PromotionsScreen extends ConsumerWidget {
   const PromotionsScreen({super.key});
 

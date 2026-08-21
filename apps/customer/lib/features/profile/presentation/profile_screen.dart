@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/application/session_notifier.dart';
 
+/// Профиль: вход/выход и переходы в заказы и акции.
+///
+/// Каталог и корзина доступны без авторизации — вход требуется только на
+/// оформлении заказа (см. [checkoutRedirectGuard]).
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 

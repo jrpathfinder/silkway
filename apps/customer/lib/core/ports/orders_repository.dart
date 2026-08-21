@@ -1,5 +1,9 @@
 import '../models/order.dart';
 
+/// Контракт работы с заказами.
+///
+/// Цены в [CreateOrderLineInput] намеренно не передаются: сервер сам
+/// пересчитывает стоимость по каталогу и клиентским суммам не доверяет.
 class CreateOrderLineInput {
   const CreateOrderLineInput({required this.itemId, required this.quantity, this.modifierIds = const []});
 

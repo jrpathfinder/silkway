@@ -1,5 +1,7 @@
 import '../map_provider.dart';
 
+/// Заглушка карт: ничего не рисует, нужна чтобы собрать приложение без
+/// ключей Яндекс MapKit.
 class MockMapProvider implements MapProvider {
   @override
   Future<GeoPoint> currentLocation() async => const GeoPoint(55.751244, 37.618423); // central Moscow

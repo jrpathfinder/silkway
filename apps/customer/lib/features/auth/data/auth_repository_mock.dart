@@ -1,6 +1,7 @@
 import '../../../core/models/auth.dart';
 import '../../../core/ports/auth_repository.dart';
 
+/// Мок входа. Повторяет dev-поведение бэкенда: подходит только код `0000`.
 class AuthRepositoryMock implements AuthRepository {
   @override
   Future<OtpRequestResult> requestOtp(String phone) async {

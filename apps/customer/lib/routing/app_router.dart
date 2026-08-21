@@ -21,6 +21,8 @@ import '../features/splash/application/splash_gate.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import 'route_guards.dart';
 
+/// Маршруты приложения. Таблица зависит от флейвора: у курьера свой,
+/// короткий набор экранов.
 final appRouterProvider = Provider<GoRouter>((ref) {
   final flavor = ref.watch(envProvider).flavor;
   return flavor == AppFlavor.courier ? _buildCourierRouter(ref) : _buildCustomerRouter(ref);

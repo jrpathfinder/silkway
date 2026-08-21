@@ -6,6 +6,7 @@ import '../../../../core/providers.dart';
 import '../../data/loyalty_repository_http.dart';
 import '../../data/loyalty_repository_mock.dart';
 
+/// Переключатель мок/HTTP для акций: выбор зависит от Env.useMocks.
 final loyaltyRepositoryProvider = Provider<LoyaltyRepository>((ref) {
   final env = ref.watch(envProvider);
   return env.useMocks ? LoyaltyRepositoryMock() : LoyaltyRepositoryHttp(ref.watch(apiClientProvider));

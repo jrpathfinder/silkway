@@ -8,6 +8,10 @@ import '../../../core/design_system/widgets/sw_sticky_cta_bar.dart';
 import '../../../core/utils/money.dart';
 import '../application/cart_notifier.dart';
 
+/// Корзина: состав заказа, изменение количества, переход к оформлению.
+///
+/// Цены здесь — клиентская оценка для показа. Итог всё равно пересчитывается
+/// на сервере при создании заказа, клиентским суммам бэкенд не доверяет.
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 

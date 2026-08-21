@@ -1,3 +1,4 @@
+/// Платёжная сессия: статус и адрес размещённой страницы оплаты.
 enum PaymentStatus { pending, succeeded, cancelled }
 
 class PaymentCheckout {

@@ -5,6 +5,9 @@ import '../../../core/models/order.dart';
 import '../../../core/utils/money.dart';
 import 'providers/orders_providers.dart';
 
+/// Статус конкретного заказа с составом и итоговой суммой.
+///
+/// Финальная точка потока: сюда переходят после оплаты.
 class OrderStatusScreen extends ConsumerWidget {
   const OrderStatusScreen({super.key, required this.orderId});
 

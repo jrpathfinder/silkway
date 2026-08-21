@@ -2,6 +2,7 @@ import '../../../core/models/location.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/ports/locations_repository.dart';
 
+/// Рестораны из бэкенда. Реализован полностью.
 class LocationsRepositoryHttp implements LocationsRepository {
   LocationsRepositoryHttp(this._client);
 

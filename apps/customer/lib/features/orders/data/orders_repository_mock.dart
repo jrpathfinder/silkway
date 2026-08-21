@@ -3,6 +3,8 @@ import 'dart:math';
 import '../../../core/models/order.dart';
 import '../../../core/ports/orders_repository.dart';
 
+/// Мок заказов: хранит их в памяти и повторяет ключевые правила бэкенда —
+/// пересчёт цен по каталогу на своей стороне и идемпотентность создания.
 class OrdersRepositoryMock implements OrdersRepository {
   final Map<String, Order> _orders = {};
   final Map<String, String> _idempotency = {};

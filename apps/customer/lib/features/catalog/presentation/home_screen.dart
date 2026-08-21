@@ -11,6 +11,14 @@ import '../../locations/presentation/providers/locations_providers.dart';
 import 'item_detail_sheet.dart';
 import 'providers/catalog_providers.dart';
 
+/// Главный экран: витрина меню выбранного ресторана.
+///
+/// Точка входа покупательского потока (каталог -> корзина -> оформление ->
+/// оплата -> статус заказа). В шапке — текущий ресторан, тап по нему открывает
+/// [showLocationPicker]. Тап по блюду открывает [ItemDetailSheet].
+///
+/// Первый активный ресторан подставляется автоматически, чтобы пользователь
+/// видел меню сразу, без обязательного выбора.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 

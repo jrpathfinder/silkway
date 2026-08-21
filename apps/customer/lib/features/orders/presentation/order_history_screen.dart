@@ -6,6 +6,10 @@ import '../../../core/utils/money.dart';
 import '../../auth/application/session_notifier.dart';
 import 'providers/orders_providers.dart';
 
+/// История заказов покупателя.
+///
+/// Работает только на моках: бэкенд ещё не отдаёт список заказов
+/// (см. OrdersRepositoryHttp.listForCustomer).
 class OrderHistoryScreen extends ConsumerWidget {
   const OrderHistoryScreen({super.key});
 

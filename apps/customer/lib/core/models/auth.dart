@@ -1,3 +1,4 @@
+/// Ответы бэкенда на запрос и проверку SMS-кода.
 class OtpRequestResult {
   const OtpRequestResult({required this.accepted, required this.phone, required this.expiresInSeconds});
 

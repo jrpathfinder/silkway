@@ -7,6 +7,7 @@ import '../../../orders/presentation/providers/orders_providers.dart';
 import '../../data/payment_repository_http.dart';
 import '../../data/payment_repository_mock.dart';
 
+/// Переключатель мок/HTTP для оплаты: выбор зависит от Env.useMocks.
 final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
   final env = ref.watch(envProvider);
   if (env.useMocks) {

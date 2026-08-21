@@ -2,6 +2,10 @@ import '../../../core/models/auth.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/ports/auth_repository.dart';
 
+/// Вход по SMS-коду через бэкенд.
+///
+/// На стороне сервера это пока dev-заглушка: код `0000`, статические токены,
+/// никакой реальной сессии (см. AuthService.verifyOtp).
 class AuthRepositoryHttp implements AuthRepository {
   AuthRepositoryHttp(this._client);
 

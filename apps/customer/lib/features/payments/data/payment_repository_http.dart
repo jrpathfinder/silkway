@@ -2,6 +2,7 @@ import '../../../core/models/payment.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/ports/payment_repository.dart';
 
+/// Создание платёжной сессии через бэкенд.
 class PaymentRepositoryHttp implements PaymentRepository {
   PaymentRepositoryHttp(this._client);
 

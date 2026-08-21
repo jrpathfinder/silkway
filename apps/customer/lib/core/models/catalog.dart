@@ -1,3 +1,7 @@
+/// Меню ресторана: категории, блюда и модификаторы.
+///
+/// Цены приходят в рублях (`priceRub`) — в Postgres они хранятся в копейках
+/// целым числом, конвертация происходит на бэкенде.
 class CatalogCategory {
   const CatalogCategory({required this.id, required this.name, required this.sortOrder});
 

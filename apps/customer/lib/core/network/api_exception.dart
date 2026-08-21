@@ -1,3 +1,4 @@
+/// Ошибка обращения к бэкенду.
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode});
 

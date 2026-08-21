@@ -1,3 +1,5 @@
+/// Ресторан. В доменной модели это `Brand -> City -> Location`, поэтому
+/// у точки есть `cityId` даже при одном городе.
 class RestaurantLocation {
   const RestaurantLocation({
     required this.id,

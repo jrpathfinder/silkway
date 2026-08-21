@@ -16,6 +16,7 @@ import 'providers/payment_providers.dart';
 /// before moving on. In real mode it loads `confirmationUrl` in a WebView
 /// and polls order status while the sheet is open (there's no push/webhook
 /// channel to the client yet).
+/// Оплата: размещённая платёжная страница во встроенном WebView.
 class PaymentWebviewScreen extends ConsumerStatefulWidget {
   const PaymentWebviewScreen({super.key, required this.orderId});
 

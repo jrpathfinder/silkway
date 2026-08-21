@@ -2,6 +2,8 @@ import '../../../core/models/payment.dart';
 import '../../../core/ports/payment_repository.dart';
 import '../../orders/data/orders_repository_mock.dart';
 
+/// Мок оплаты: платёж «проходит» сразу и переводит заказ в PAID, изображая
+/// то, что в реальности делает вебхук платёжного провайдера.
 class PaymentRepositoryMock implements PaymentRepository {
   PaymentRepositoryMock(this._ordersMock);
 

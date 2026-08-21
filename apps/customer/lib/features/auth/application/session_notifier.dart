@@ -6,6 +6,10 @@ import '../../../core/providers.dart';
 import '../data/auth_repository_http.dart';
 import '../data/auth_repository_mock.dart';
 
+/// Сессия пользователя: токен и телефон.
+///
+/// Восстанавливается из защищённого хранилища при старте, поэтому вход
+/// переживает перезапуск приложения.
 class SessionState {
   const SessionState({this.accessToken, this.phone});
 

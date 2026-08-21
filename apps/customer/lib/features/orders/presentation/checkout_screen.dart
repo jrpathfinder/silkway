@@ -12,6 +12,11 @@ import '../../cart/application/cart_notifier.dart';
 import '../../locations/presentation/providers/locations_providers.dart';
 import 'providers/orders_providers.dart';
 
+/// Оформление заказа: подтверждение состава и создание заказа.
+///
+/// Экран под защитой [checkoutRedirectGuard] — сюда не попасть без авторизации.
+/// Ключ идемпотентности берётся из [IdempotencyKeyStore] и переживает
+/// перезапуск приложения, поэтому повторная отправка не создаст второй заказ.
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
 

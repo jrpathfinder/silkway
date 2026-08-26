@@ -79,37 +79,111 @@ class _ItemDetailSheetState extends ConsumerState<ItemDetailSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (item.imageUrl != null)
-                    // Тот же тег, что у карточки в меню, — фото перелетает в
-                    // шторку, а не появляется заново.
-                    Hero(
-                      tag: 'dish-${item.id}',
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(SwSpacing.radiusLg),
-                        child: AspectRatio(
-                          aspectRatio: 16 / 10,
-                          child: DishImage(imageUrl: item.imageUrl, borderRadius: BorderRadius.zero),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Тот же тег, что у карточки в меню, — фото перелетает в
+                        // шторку, а не появляется заново.
+                        Hero(
+                          tag: 'dish-${item.id}',
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(SwSpacing.radiusLg),
+                            child: AspectRatio(
+                              aspectRatio: 16 / 10,
+                              child: DishImage(imageUrl: item.imageUrl, borderRadius: BorderRadius.zero),
+                            ),
+                          ),
                         ),
-                      ),
+                        if (item.originalPriceRub != null)
+                          Positioned(
+                            left: SwSpacing.md,
+                            bottom: -SwSpacing.md,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+                              child: const Icon(Icons.percent_rounded, color: Colors.white, size: 16),
+                            ),
+                          ),
+                      ],
                     ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(SwSpacing.xl, SwSpacing.xl, SwSpacing.xl, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.name, style: SwTypography.h1.copyWith(color: scheme.onSurface)),
-                        const SizedBox(height: SwSpacing.xs),
-                        Text(
-                          formatRub(item.priceRub),
-                          style: SwTypography.priceLarge.copyWith(color: scheme.primary),
+                        // Вес — не часть названия, а его происхождение другое (с витрины,
+                        // не из description) заслуживает отдельного поля, а не конкатенации.
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Flexible(child: Text(item.name, style: SwTypography.h1.copyWith(color: scheme.onSurface))),
+                            if (item.weightLabel != null) ...[
+                              const SizedBox(width: SwSpacing.sm),
+                              Text(
+                                item.weightLabel!,
+                                style: SwTypography.body.copyWith(color: scheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ],
                         ),
+                        const SizedBox(height: SwSpacing.xs),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              formatRub(item.priceRub),
+                              style: SwTypography.priceLarge.copyWith(color: scheme.primary),
+                            ),
+                            if (item.originalPriceRub != null) ...[
+                              const SizedBox(width: SwSpacing.sm),
+                              Text(
+                                formatRub(item.originalPriceRub!),
+                                style: SwTypography.body.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (item.ratingPercent != null) ...[
+                          const SizedBox(height: SwSpacing.sm),
+                          Row(
+                            children: [
+                              Icon(Icons.thumb_up_alt_outlined, size: 16, color: scheme.onSurfaceVariant),
+                              const SizedBox(width: SwSpacing.xs),
+                              Text('${item.ratingPercent}%', style: SwTypography.bodyStrong.copyWith(color: scheme.onSurface)),
+                              const SizedBox(width: SwSpacing.xs),
+                              Text('(${item.ratingCount})', style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant)),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: SwSpacing.md),
                         Text(
                           item.description,
                           style: SwTypography.body.copyWith(color: scheme.onSurfaceVariant),
                         ),
+                        if (item.composition != null) ...[
+                          const SizedBox(height: SwSpacing.xxl),
+                          Text('Состав', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
+                          const SizedBox(height: SwSpacing.sm),
+                          Text(item.composition!, style: SwTypography.body.copyWith(color: scheme.onSurfaceVariant)),
+                        ],
+                        if (item.nutritionPer100g != null) ...[
+                          const SizedBox(height: SwSpacing.xxl),
+                          Text('На 100 г', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
+                          const SizedBox(height: SwSpacing.sm),
+                          _NutritionFactsRow(facts: item.nutritionPer100g!),
+                        ],
                         if (item.modifiers.isNotEmpty) ...[
                           const SizedBox(height: SwSpacing.xxl),
-                          Text('Добавить к блюду', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
+                          Text(
+                            item.modifierGroupLabel ?? 'Добавить к блюду',
+                            style: SwTypography.h3.copyWith(color: scheme.onSurface),
+                          ),
                           const SizedBox(height: SwSpacing.sm),
                           for (final modifier in item.modifiers)
                             _ModifierRow(
@@ -149,6 +223,47 @@ class _ItemDetailSheetState extends ConsumerState<ItemDetailSheet> {
       ),
     );
   }
+}
+
+/// БЖУ на 100 г — четыре колонки в одной плашке, а не список строк: значений
+/// всего четыре и они короткие, табличный вид читается быстрее.
+class _NutritionFactsRow extends StatelessWidget {
+  const _NutritionFactsRow({required this.facts});
+
+  final CatalogNutritionFacts facts;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final entries = [
+      (_formatNumber(facts.caloriesKcal), 'ккал'),
+      (_formatNumber(facts.proteinG), 'белки'),
+      (_formatNumber(facts.fatG), 'жиры'),
+      (_formatNumber(facts.carbsG), 'углеводы'),
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: SwSpacing.md, horizontal: SwSpacing.sm),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(SwSpacing.radiusMd),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (final (value, label) in entries)
+            Column(
+              children: [
+                Text(value, style: SwTypography.bodyStrong.copyWith(color: scheme.onSurface)),
+                const SizedBox(height: SwSpacing.xs),
+                Text(label, style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant)),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _formatNumber(double value) => value == value.roundToDouble() ? value.toInt().toString() : value.toString();
 }
 
 /// Строка модификатора.

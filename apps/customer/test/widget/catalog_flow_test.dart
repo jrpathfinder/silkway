@@ -37,7 +37,7 @@ void main() {
     // Название категории встречается дважды: чип фильтра и заголовок раздела.
     expect(find.text('Всё'), findsOneWidget);
     expect(find.text('Горячие блюда'), findsNWidgets(2));
-    expect(find.text('Плов классический'), findsOneWidget);
+    expect(find.text('Плов по-ташкентски'), findsOneWidget);
 
     // Открываем карточку блюда. Второй раздел проверяется отдельным тестом:
     // прокрутка к нему уводит «Плов» за пределы экрана.
@@ -45,30 +45,30 @@ void main() {
     // ensureVisible обязателен: карточка с фото высокая, и в тестовом
     // вьюпорте название может оказаться ниже видимой области — тап по
     // невидимой точке не засчитывается.
-    await tester.ensureVisible(find.text('Плов классический'));
+    await tester.ensureVisible(find.text('Плов по-ташкентски'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Плов классический'));
+    await tester.tap(find.text('Плов по-ташкентски'));
     await tester.pumpAndSettle();
 
     // Признак того, что шторка открылась, — модификатор: он есть только в
     // карточке блюда. Описание встречается и в списке, и в шторке, поэтому
     // по нему проверять ненадёжно.
-    expect(find.text('Дополнительное мясо'), findsOneWidget);
-    expect(find.textContaining('Рис, мясо, морковь'), findsAtLeastNWidgets(1));
+    expect(find.text('Тандырная лепешка'), findsOneWidget);
+    expect(find.textContaining('нежной говядины'), findsAtLeastNWidgets(1));
 
     // Bump quantity to 2 and select the modifier.
     await tapAndSettle(tester, _inside(ItemDetailSheet, Icons.add_rounded));
     // Модификатор — своя строка вместо CheckboxListTile: тапаем по названию,
     // вся строка кликабельна.
-    await tapAndSettle(tester, find.text('Дополнительное мясо'));
+    await tapAndSettle(tester, find.text('Тандырная лепешка'));
     await tapAndSettle(tester, find.text('Добавить в корзину'));
 
     // Switch to the cart tab.
     await tester.tap(find.byIcon(Icons.shopping_basket_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.text('Плов классический'), findsOneWidget);
-    expect(find.text('Дополнительное мясо'), findsOneWidget);
+    expect(find.text('Плов по-ташкентски'), findsOneWidget);
+    expect(find.text('Тандырная лепешка'), findsOneWidget);
     expect(find.text('Товаров: 2'), findsOneWidget);
 
     // Increment then decrement twice back to zero, which removes the line.

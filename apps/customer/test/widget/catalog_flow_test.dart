@@ -106,18 +106,19 @@ void main() {
     expect(find.text('Корзина пуста'), findsOneWidget);
   });
 
-  testWidgets('switching restaurants via the location picker sheet', (tester) async {
+  testWidgets('opening the location picker sheet shows the active location', (tester) async {
     await _pumpApp(tester);
 
     await tester.tap(find.byKey(HomeScreen.locationPickerKey));
     await tester.pumpAndSettle();
 
     expect(find.text('ВЫБЕРИТЕ РЕСТОРАН'), findsOneWidget);
-    expect(find.textContaining('Москва (Юг)'), findsOneWidget);
+    expect(find.textContaining('Народного Ополчения'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Москва (Юг)'));
+    // Только один филиал — выбор своей же строки просто закрывает шторку.
+    await tester.tap(find.textContaining('Народного Ополчения'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Москва (Юг)'), findsOneWidget);
+    expect(find.text('ВЫБЕРИТЕ РЕСТОРАН'), findsNothing);
   });
 }

@@ -16,7 +16,7 @@ export class LocationsService {
       id: 'ca-moscow-1',
       cityId: 'moscow',
       name: 'Шелковый путь — Москва',
-      address: 'Москва, адрес будет указан при запуске',
+      address: 'Москва, ул. Народного Ополчения, 20к1',
       timezone: 'Europe/Moscow',
       isActive: true,
     },

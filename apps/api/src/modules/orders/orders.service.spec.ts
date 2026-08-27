@@ -53,8 +53,21 @@ describe('OrdersService', () => {
         customerId: 'customer-4',
         lines: [{ itemId: 'samsa-lamb', quantity: 1 }],
         fulfillmentType: 'DELIVERY',
-        // Санкт-Петербург — далеко за пределами прямоугольника вокруг Москвы.
+        // Санкт-Петербург — далеко за пределами кольца МКАД.
         deliveryAddress: { lat: 59.9311, lng: 30.3609, addressText: 'Санкт-Петербург' },
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects a delivery address just outside MKAD, even though it is administratively Moscow', async () => {
+    await expect(
+      service.create({
+        locationId: 'ca-moscow-1',
+        customerId: 'customer-6',
+        lines: [{ itemId: 'samsa-lamb', quantity: 1 }],
+        fulfillmentType: 'DELIVERY',
+        // Внуково: аэропорт, часть Москвы административно, но снаружи МКАД.
+        deliveryAddress: { lat: 55.5915, lng: 37.2615, addressText: 'Аэропорт Внуково' },
       }),
     ).rejects.toThrow(BadRequestException);
   });

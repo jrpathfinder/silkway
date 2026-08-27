@@ -164,12 +164,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
               PolygonLayer(
                 polygons: [
                   Polygon(
-                    points: const [
-                      LatLng(MoscowDeliveryZone.minLat, MoscowDeliveryZone.minLng),
-                      LatLng(MoscowDeliveryZone.minLat, MoscowDeliveryZone.maxLng),
-                      LatLng(MoscowDeliveryZone.maxLat, MoscowDeliveryZone.maxLng),
-                      LatLng(MoscowDeliveryZone.maxLat, MoscowDeliveryZone.minLng),
-                    ],
+                    points: [for (final (lat, lng) in MoscowDeliveryZone.ringPoints) LatLng(lat, lng)],
                     color: scheme.primary.withValues(alpha: 0.06),
                     borderStrokeWidth: 2,
                     borderColor: scheme.primary.withValues(alpha: 0.6),

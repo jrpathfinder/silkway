@@ -11,7 +11,7 @@ import '../../data/orders_repository_mock.dart';
 final ordersRepositoryProvider = Provider<OrdersRepository>((ref) {
   final env = ref.watch(envProvider);
   return env.useMocks
-      ? OrdersRepositoryMock(ref.watch(catalogRepositoryProvider))
+      ? OrdersRepositoryMock(ref.watch(catalogRepositoryProvider), ref.watch(localKvProvider))
       : OrdersRepositoryHttp(ref.watch(apiClientProvider));
 });
 

@@ -16,7 +16,7 @@ class PaymentRepositoryMock implements PaymentRepository {
     // payment "succeeds" immediately and the linked mock order is marked
     // PAID directly, simulating what the real verified webhook does
     // server-side (see docs/api.md "Webhooks").
-    _ordersMock.markPaidForDemo(orderId);
+    await _ordersMock.markPaidForDemo(orderId);
     return PaymentCheckout(
       id: 'mock_payment_$orderId',
       status: PaymentStatus.succeeded,

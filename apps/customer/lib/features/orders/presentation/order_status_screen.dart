@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/design_system/tokens/sw_spacing.dart';
 import '../../../core/design_system/tokens/sw_typography.dart';
@@ -103,6 +104,18 @@ class OrderStatusScreen extends ConsumerWidget {
                   Text('Итого', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
                   Text(formatRub(order.totalRub), style: SwTypography.priceLarge.copyWith(color: scheme.onSurface)),
                 ],
+              ),
+              const SizedBox(height: SwSpacing.xxl),
+              // Этот экран часто открывается через go() сразу после оплаты
+              // (без стека навигации, там нет системной кнопки «назад»), а
+              // также из истории заказов (push, там она есть) — кнопка нужна
+              // в обоих случаях, поэтому не полагаемся на AppBar.
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text('На главную'),
+                ),
               ),
             ],
           );

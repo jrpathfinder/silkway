@@ -38,6 +38,18 @@ enum OrderStatus {
         throw ArgumentError('Unknown order status: $value');
     }
   }
+
+  String toWire() => switch (this) {
+        OrderStatus.pendingPayment => 'PENDING_PAYMENT',
+        OrderStatus.paid => 'PAID',
+        OrderStatus.accepted => 'ACCEPTED',
+        OrderStatus.preparing => 'PREPARING',
+        OrderStatus.readyForDelivery => 'READY_FOR_DELIVERY',
+        OrderStatus.inDelivery => 'IN_DELIVERY',
+        OrderStatus.delivered => 'DELIVERED',
+        OrderStatus.cancelled => 'CANCELLED',
+        OrderStatus.refunded => 'REFUNDED',
+      };
 }
 
 enum FulfillmentType {
@@ -71,6 +83,14 @@ class OrderLine {
         unitPriceRub: (json['unitPriceRub'] as num).toDouble(),
         modifierIds: (json['modifierIds'] as List<dynamic>? ?? const []).cast<String>(),
       );
+
+  Map<String, dynamic> toJson() => {
+        'itemId': itemId,
+        'name': name,
+        'quantity': quantity,
+        'unitPriceRub': unitPriceRub,
+        'modifierIds': modifierIds,
+      };
 }
 
 class Order {
@@ -114,4 +134,19 @@ class Order {
             ? null
             : DeliveryAddress.fromJson(json['deliveryAddress'] as Map<String, dynamic>),
       );
+
+  /// Только для локального хранения мок-заказов (OrdersRepositoryMock) —
+  /// реальный бэкенд заказы не читает обратно из этого JSON, он их создаёт.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'locationId': locationId,
+        'customerId': customerId,
+        'lines': lines.map((l) => l.toJson()).toList(),
+        'totalRub': totalRub,
+        'status': status.toWire(),
+        'createdAt': createdAt.toIso8601String(),
+        if (paymentId != null) 'paymentId': paymentId,
+        'fulfillmentType': fulfillmentType.toWire(),
+        if (deliveryAddress != null) 'deliveryAddress': deliveryAddress!.toJson(),
+      };
 }

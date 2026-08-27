@@ -185,7 +185,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
                 child: Icon(
                   _outOfZone ? Icons.location_off : Icons.location_on,
                   size: 44,
-                  color: _outOfZone ? scheme.error : scheme.primary,
+                  color: _outOfZone ? scheme.onSurfaceVariant : scheme.primary,
                 ),
               ),
             ),
@@ -269,7 +269,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
                       children: [
                         Icon(
                           _outOfZone ? Icons.block : Icons.location_on,
-                          color: _outOfZone ? scheme.error : scheme.primary,
+                          color: _outOfZone ? scheme.onSurfaceVariant : scheme.primary,
                           size: 20,
                         ),
                         const SizedBox(width: SwSpacing.sm),
@@ -277,7 +277,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
                           child: _outOfZone
                               ? Text(
                                   'Мы не доставляем в этот район. Попробуйте другой адрес в Москве.',
-                                  style: SwTypography.bodyStrong.copyWith(color: scheme.error),
+                                  style: SwTypography.bodyStrong.copyWith(color: scheme.onSurfaceVariant),
                                 )
                               : _loadingAddress
                                   ? Text('Определяем адрес…', style: SwTypography.body.copyWith(color: scheme.onSurfaceVariant))

@@ -12,6 +12,9 @@ void main() {
     );
 
     expect(find.text('Заказы'), findsOneWidget);
-    expect(find.text('Пока нет предложений'), findsOneWidget);
+    // CourierRepositoryMock сеет пару готовых к выдаче заказов, чтобы флейвор
+    // был проверяем и без бэкенда.
+    expect(find.text('Новые предложения'), findsOneWidget);
+    expect(find.textContaining('Красная площадь'), findsOneWidget);
   });
 }

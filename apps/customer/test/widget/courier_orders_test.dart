@@ -12,6 +12,7 @@ class _RecordingCourierRepository implements CourierRepository {
   final List<Order> _offers;
   final List<String> accepted = [];
   final List<String> denied = [];
+  final List<String> delivered = [];
 
   @override
   Future<List<Order>> listOfferedOrders() async => _offers;
@@ -21,6 +22,9 @@ class _RecordingCourierRepository implements CourierRepository {
 
   @override
   Future<void> denyOrder(String orderId) async => denied.add(orderId);
+
+  @override
+  Future<void> markDelivered(String orderId) async => delivered.add(orderId);
 }
 
 Order _order(String id) => Order(
@@ -78,5 +82,21 @@ void main() {
 
     expect(repo.denied, ['order-1']);
     expect(repo.accepted, isEmpty);
+  });
+
+  testWidgets('accepting an offer moves it into "В пути", and delivering it calls the repository', (tester) async {
+    final repo = await _pumpCourierHome(tester, [_order('order-1')]);
+
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+
+    expect(find.text('В пути'), findsOneWidget);
+    expect(find.text('Доставлено'), findsOneWidget);
+
+    await tester.tap(find.text('Доставлено'));
+    await tester.pumpAndSettle();
+
+    expect(repo.delivered, ['order-1']);
+    expect(find.text('В пути'), findsNothing);
   });
 }

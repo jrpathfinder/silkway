@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { CatalogService } from '../catalog/catalog.service';
 import { LocationsService } from '../locations/locations.service';
 import { PaymentProvider } from '../integrations/ports/payment.port';
-import { DeliveryAddress, FulfillmentType, Order } from './order.types';
+import { DeliveryAddress, FulfillmentType, Order, OrderStatus } from './order.types';
 
 /// Реальная граница МКАД (не полная административная Москва — та включает
 /// Новую Москву далеко на юго-запад) — та же проверка, что и на клиенте
@@ -145,5 +145,57 @@ export class OrdersService {
 
   listForCustomer(customerId: string): Order[] {
     return [...this.orders.values()].filter((order) => order.customerId === customerId);
+  }
+
+  /// Без фильтра — все заказы (для панели ресторана). Отдельные action-эндпоинты
+  /// (accept/prepare/ready/...) сами проверяют исходный статус, поэтому здесь
+  /// достаточно простого списка по статусам, без общего "сменить на любой".
+  listByStatuses(statuses?: OrderStatus[]): Order[] {
+    const all = [...this.orders.values()];
+    if (!statuses || !statuses.length) return all;
+    return all.filter((order) => statuses.includes(order.status));
+  }
+
+  private transition(orderId: string, from: OrderStatus[], to: OrderStatus): Order {
+    const order = this.get(orderId);
+    if (!from.includes(order.status)) {
+      throw new BadRequestException(`Заказ ${orderId} в статусе ${order.status}, ожидался один из: ${from.join(', ')}`);
+    }
+    order.status = to;
+    return order;
+  }
+
+  /// Временная замена реальной обработки платёжного вебхука (см.
+  /// IntegrationsController.paymentWebhook — сейчас это заглушка, не
+  /// связанная с OrdersService). Без неё заказ никогда не покидает
+  /// PENDING_PAYMENT и весь конвейер приёма/готовки/доставки непроверяем.
+  markPaidForDemo(orderId: string): Order {
+    return this.transition(orderId, ['PENDING_PAYMENT'], 'PAID');
+  }
+
+  /// Ресторан принимает заказ в работу.
+  accept(orderId: string): Order {
+    return this.transition(orderId, ['PAID'], 'ACCEPTED');
+  }
+
+  /// Ресторан начинает готовить.
+  startPreparing(orderId: string): Order {
+    return this.transition(orderId, ['ACCEPTED'], 'PREPARING');
+  }
+
+  /// Готово — можно забирать (курьеру или самовывозом).
+  markReadyForDelivery(orderId: string): Order {
+    return this.transition(orderId, ['PREPARING'], 'READY_FOR_DELIVERY');
+  }
+
+  /// Курьер берёт заказ в доставку. Модели назначения конкретного курьера
+  /// пока нет — первый принявший забирает заказ из общего пула предложений.
+  courierAccept(orderId: string): Order {
+    return this.transition(orderId, ['READY_FOR_DELIVERY'], 'IN_DELIVERY');
+  }
+
+  /// Курьер подтверждает вручение.
+  markDelivered(orderId: string): Order {
+    return this.transition(orderId, ['IN_DELIVERY'], 'DELIVERED');
   }
 }

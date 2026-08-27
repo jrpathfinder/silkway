@@ -41,6 +41,13 @@ export class OrdersController {
     return this.orders.createCheckout(orderId).then((payment) => ({ data: payment }));
   }
 
+  /// Заглушка на месте реальной обработки платёжного вебхука (см.
+  /// IntegrationsController.paymentWebhook и OrdersService.markPaidForDemo).
+  @Post(':orderId/mark-paid-demo')
+  markPaidDemo(@Param('orderId') orderId: string) {
+    return { data: this.orders.markPaidForDemo(orderId) };
+  }
+
   @Get(':orderId')
   get(@Param('orderId') orderId: string) {
     return { data: this.orders.get(orderId) };

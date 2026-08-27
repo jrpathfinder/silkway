@@ -1,4 +1,4 @@
-import type { Category, CatalogExport, Item, Modifier, Promotion } from './types';
+import type { Category, CatalogExport, Item, Modifier, Order, OrderStatus, Promotion } from './types';
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:3000/v1';
 const TOKEN_STORAGE_KEY = 'sw-admin-token';
@@ -63,6 +63,12 @@ export const api = {
   updatePromotion: (id: string, input: Partial<Promotion>) =>
     request<Promotion>(`/admin/promotions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   deletePromotion: (id: string) => request<{ ok: true }>(`/admin/promotions/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  listOrders: (statuses?: OrderStatus[]) =>
+    request<Order[]>(`/admin/orders${statuses?.length ? `?status=${statuses.join(',')}` : ''}`),
+  acceptOrder: (id: string) => request<Order>(`/admin/orders/${encodeURIComponent(id)}/accept`, { method: 'POST' }),
+  prepareOrder: (id: string) => request<Order>(`/admin/orders/${encodeURIComponent(id)}/prepare`, { method: 'POST' }),
+  readyOrder: (id: string) => request<Order>(`/admin/orders/${encodeURIComponent(id)}/ready`, { method: 'POST' }),
 
   exportCatalog: () => request<CatalogExport>('/admin/catalog/export'),
   importCatalog: (payload: Partial<CatalogExport>) =>

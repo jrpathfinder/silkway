@@ -82,4 +82,37 @@ describe('OrdersService', () => {
     expect(order.fulfillmentType).toBe('PICKUP');
     expect(order.deliveryAddress).toBeUndefined();
   });
+
+  it('walks an order through the full restaurant + courier handoff, rejecting out-of-order transitions', async () => {
+    const order = await service.create({
+      locationId: 'ca-moscow-1',
+      customerId: 'customer-7',
+      lines: [{ itemId: 'samsa-lamb', quantity: 1 }],
+      fulfillmentType: 'PICKUP',
+    });
+
+    expect(() => service.accept(order.id)).toThrow(BadRequestException);
+
+    service.markPaidForDemo(order.id);
+    expect(service.get(order.id).status).toBe('PAID');
+    expect(service.listByStatuses(['PAID']).map((o) => o.id)).toContain(order.id);
+
+    service.accept(order.id);
+    expect(service.get(order.id).status).toBe('ACCEPTED');
+
+    service.startPreparing(order.id);
+    expect(service.get(order.id).status).toBe('PREPARING');
+
+    service.markReadyForDelivery(order.id);
+    expect(service.get(order.id).status).toBe('READY_FOR_DELIVERY');
+    expect(service.listByStatuses(['READY_FOR_DELIVERY']).map((o) => o.id)).toContain(order.id);
+
+    service.courierAccept(order.id);
+    expect(service.get(order.id).status).toBe('IN_DELIVERY');
+
+    service.markDelivered(order.id);
+    expect(service.get(order.id).status).toBe('DELIVERED');
+
+    expect(() => service.accept(order.id)).toThrow(BadRequestException);
+  });
 });

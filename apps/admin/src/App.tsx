@@ -4,11 +4,13 @@ import { CategoriesPanel } from './components/CategoriesPanel';
 import { ImportExportPanel } from './components/ImportExportPanel';
 import { ItemsPanel } from './components/ItemsPanel';
 import { LoginScreen } from './components/LoginScreen';
+import { OrdersPanel } from './components/OrdersPanel';
 import { PromotionsPanel } from './components/PromotionsPanel';
 
-type Tab = 'items' | 'categories' | 'promotions' | 'import-export';
+type Tab = 'orders' | 'items' | 'categories' | 'promotions' | 'import-export';
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'orders', label: 'Заказы' },
   { id: 'items', label: 'Блюда' },
   { id: 'categories', label: 'Категории' },
   { id: 'promotions', label: 'Акции' },
@@ -17,7 +19,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function App() {
   const [authed, setAuthed] = useState(() => Boolean(getToken()));
-  const [tab, setTab] = useState<Tab>('items');
+  const [tab, setTab] = useState<Tab>('orders');
 
   const onUnauthorized = () => setAuthed(false);
 
@@ -47,6 +49,7 @@ export function App() {
         </button>
       </header>
       <main className="content">
+        {tab === 'orders' && <OrdersPanel onUnauthorized={onUnauthorized} />}
         {tab === 'items' && <ItemsPanel onUnauthorized={onUnauthorized} />}
         {tab === 'categories' && <CategoriesPanel onUnauthorized={onUnauthorized} />}
         {tab === 'promotions' && <PromotionsPanel onUnauthorized={onUnauthorized} />}

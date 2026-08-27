@@ -5,6 +5,22 @@ import { LocationsService } from '../locations/locations.service';
 import { PaymentProvider } from '../integrations/ports/payment.port';
 import { DeliveryAddress, FulfillmentType, Order } from './order.types';
 
+/// Грубый прямоугольник вокруг Москвы — та же приближённая проверка, что и
+/// на клиенте (apps/customer/lib/core/models/delivery_zone.dart,
+/// MoscowDeliveryZone) — намеренно продублирована через границу Dart/TS, а
+/// не общий код; правь оба места вместе. Сервер не доверяет клиенту цену и
+/// точно так же не должен доверять ему "адрес в зоне доставки".
+const MOSCOW_DELIVERY_ZONE = { minLat: 55.48, maxLat: 55.95, minLng: 37.25, maxLng: 37.95 };
+
+function isInMoscowDeliveryZone(lat: number, lng: number): boolean {
+  return (
+    lat >= MOSCOW_DELIVERY_ZONE.minLat &&
+    lat <= MOSCOW_DELIVERY_ZONE.maxLat &&
+    lng >= MOSCOW_DELIVERY_ZONE.minLng &&
+    lng <= MOSCOW_DELIVERY_ZONE.maxLng
+  );
+}
+
 type CreateOrderInput = {
   locationId: string;
   customerId: string;
@@ -31,6 +47,14 @@ export class OrdersService {
       return this.orders.get(this.idempotency.get(idempotencyKey)!)!;
     }
     if (!this.locations.getById(input.locationId)) throw new BadRequestException('Unknown location');
+
+    const fulfillmentType = input.fulfillmentType ?? 'DELIVERY';
+    if (fulfillmentType === 'DELIVERY' && input.deliveryAddress) {
+      const { lat, lng } = input.deliveryAddress;
+      if (!isInMoscowDeliveryZone(lat, lng)) {
+        throw new BadRequestException('Мы не доставляем в этот район');
+      }
+    }
 
     const catalog = await this.catalog.getForLocation(input.locationId);
     const lines = input.lines.map((line) => {
@@ -62,7 +86,7 @@ export class OrdersService {
       totalRub: lines.reduce((sum, line) => sum + line.unitPriceRub * line.quantity, 0),
       status: 'PENDING_PAYMENT',
       createdAt: new Date().toISOString(),
-      fulfillmentType: input.fulfillmentType ?? 'DELIVERY',
+      fulfillmentType,
       deliveryAddress: input.deliveryAddress,
     };
     this.orders.set(order.id, order);

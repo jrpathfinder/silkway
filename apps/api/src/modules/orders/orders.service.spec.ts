@@ -33,4 +33,40 @@ describe('OrdersService', () => {
     expect(payment.confirmationUrl).toContain('https://pay.example');
     expect(service.get(order.id).paymentId).toBe('payment-1');
   });
+
+  it('accepts a delivery address inside the Moscow zone', async () => {
+    const order = await service.create({
+      locationId: 'ca-moscow-1',
+      customerId: 'customer-3',
+      lines: [{ itemId: 'samsa-lamb', quantity: 1 }],
+      fulfillmentType: 'DELIVERY',
+      deliveryAddress: { lat: 55.751244, lng: 37.618423, addressText: 'Красная площадь, Москва' },
+    });
+    expect(order.fulfillmentType).toBe('DELIVERY');
+    expect(order.deliveryAddress?.addressText).toBe('Красная площадь, Москва');
+  });
+
+  it('rejects a delivery address outside the Moscow zone', async () => {
+    await expect(
+      service.create({
+        locationId: 'ca-moscow-1',
+        customerId: 'customer-4',
+        lines: [{ itemId: 'samsa-lamb', quantity: 1 }],
+        fulfillmentType: 'DELIVERY',
+        // Санкт-Петербург — далеко за пределами прямоугольника вокруг Москвы.
+        deliveryAddress: { lat: 59.9311, lng: 30.3609, addressText: 'Санкт-Петербург' },
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('does not require a delivery address for pickup', async () => {
+    const order = await service.create({
+      locationId: 'ca-moscow-1',
+      customerId: 'customer-5',
+      lines: [{ itemId: 'samsa-lamb', quantity: 1 }],
+      fulfillmentType: 'PICKUP',
+    });
+    expect(order.fulfillmentType).toBe('PICKUP');
+    expect(order.deliveryAddress).toBeUndefined();
+  });
 });

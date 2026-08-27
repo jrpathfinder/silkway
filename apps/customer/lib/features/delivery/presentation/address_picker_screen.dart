@@ -9,6 +9,7 @@ import '../../../core/design_system/tokens/sw_spacing.dart';
 import '../../../core/design_system/tokens/sw_typography.dart';
 import '../../../core/map/nominatim_geocoding_service.dart';
 import '../../../core/models/delivery.dart';
+import '../../../core/models/delivery_zone.dart';
 import '../../../core/providers.dart';
 
 const _defaultCenter = LatLng(55.751244, 37.618423);
@@ -38,6 +39,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
   String? _addressText;
   bool _loadingAddress = false;
   bool _locating = false;
+  bool _outOfZone = false;
 
   LatLng get _initialCenter =>
       widget.initial != null ? LatLng(widget.initial!.lat, widget.initial!.lng) : _defaultCenter;
@@ -47,6 +49,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
     super.initState();
     _commentController.text = widget.initial?.comment ?? '';
     _addressText = widget.initial?.addressText;
+    _outOfZone = !MoscowDeliveryZone.contains(_initialCenter.latitude, _initialCenter.longitude);
     if (_addressText == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _reverseGeocodeNow(_initialCenter));
     }
@@ -75,6 +78,12 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
   }
 
   void _onCameraMove(MapCamera camera, bool hasGesture) {
+    // Зона доставки — чистая геометрия, без сети: проверяем сразу на каждое
+    // движение карты, а не ждём дебаунса геокодирования — булавка должна
+    // измениться в тот же момент, когда центр вышел за пределы зоны.
+    final outOfZone = !MoscowDeliveryZone.contains(camera.center.latitude, camera.center.longitude);
+    if (outOfZone != _outOfZone) setState(() => _outOfZone = outOfZone);
+
     _reverseGeocodeDebounce?.cancel();
     _reverseGeocodeDebounce = Timer(const Duration(milliseconds: 600), () => _reverseGeocodeNow(camera.center));
   }
@@ -118,6 +127,7 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
   }
 
   void _confirm() {
+    if (_outOfZone) return;
     final center = _mapController.camera.center;
     Navigator.of(context).pop(
       DeliveryAddress(
@@ -152,12 +162,17 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
 
           // Булавка нарисована поверх карты и не двигается — едет сама карта.
           // Сдвиг вверх на половину высоты иконки, чтобы остриё указывало
-          // ровно в центр, а не сама иконка.
+          // ровно в центр, а не сама иконка. Цвет меняется на "ошибку" сразу
+          // при выходе за зону доставки, без ожидания геокодирования.
           IgnorePointer(
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 36),
-                child: Icon(Icons.location_on, size: 44, color: scheme.primary),
+                child: Icon(
+                  _outOfZone ? Icons.location_off : Icons.location_on,
+                  size: 44,
+                  color: _outOfZone ? scheme.error : scheme.primary,
+                ),
               ),
             ),
           ),
@@ -238,36 +253,47 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on, color: scheme.primary, size: 20),
+                        Icon(
+                          _outOfZone ? Icons.block : Icons.location_on,
+                          color: _outOfZone ? scheme.error : scheme.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: SwSpacing.sm),
                         Expanded(
-                          child: _loadingAddress
-                              ? Text('Определяем адрес…', style: SwTypography.body.copyWith(color: scheme.onSurfaceVariant))
-                              : Text(
-                                  _addressText ?? 'Переместите карту, чтобы выбрать адрес',
-                                  style: SwTypography.bodyStrong.copyWith(color: scheme.onSurface),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                          child: _outOfZone
+                              ? Text(
+                                  'Мы не доставляем в этот район. Попробуйте другой адрес в Москве.',
+                                  style: SwTypography.bodyStrong.copyWith(color: scheme.error),
+                                )
+                              : _loadingAddress
+                                  ? Text('Определяем адрес…', style: SwTypography.body.copyWith(color: scheme.onSurfaceVariant))
+                                  : Text(
+                                      _addressText ?? 'Переместите карту, чтобы выбрать адрес',
+                                      style: SwTypography.bodyStrong.copyWith(color: scheme.onSurface),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: SwSpacing.md),
-                    TextField(
-                      controller: _commentController,
-                      decoration: InputDecoration(
-                        hintText: 'Комментарий курьеру: домофон, этаж (необязательно)',
-                        filled: true,
-                        fillColor: scheme.surfaceContainerHighest,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(SwSpacing.radiusMd), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    if (!_outOfZone) ...[
+                      const SizedBox(height: SwSpacing.md),
+                      TextField(
+                        controller: _commentController,
+                        decoration: InputDecoration(
+                          hintText: 'Комментарий курьеру: домофон, этаж (необязательно)',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(SwSpacing.radiusMd), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: SwSpacing.md),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: _addressText == null || _loadingAddress ? null : _confirm,
+                        onPressed: _outOfZone || _addressText == null || _loadingAddress ? null : _confirm,
                         child: const Text('Подтвердить адрес'),
                       ),
                     ),

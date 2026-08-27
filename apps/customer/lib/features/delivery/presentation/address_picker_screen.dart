@@ -157,6 +157,25 @@ class _AddressPickerScreenState extends ConsumerState<AddressPickerScreen> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'net.nomiq.silkway',
               ),
+              // Границу зоны рисуем прямо на карте — раньше о ней можно было
+              // узнать только реакцией пина постфактум, когда уже уехал за
+              // край. Подсвечиваем саму зону (как Wolt/Uber Eats подсвечивают
+              // зону обслуживания), а не то, что снаружи неё.
+              PolygonLayer(
+                polygons: [
+                  Polygon(
+                    points: const [
+                      LatLng(MoscowDeliveryZone.minLat, MoscowDeliveryZone.minLng),
+                      LatLng(MoscowDeliveryZone.minLat, MoscowDeliveryZone.maxLng),
+                      LatLng(MoscowDeliveryZone.maxLat, MoscowDeliveryZone.maxLng),
+                      LatLng(MoscowDeliveryZone.maxLat, MoscowDeliveryZone.minLng),
+                    ],
+                    color: scheme.primary.withValues(alpha: 0.06),
+                    borderStrokeWidth: 2,
+                    borderColor: scheme.primary.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
             ],
           ),
 

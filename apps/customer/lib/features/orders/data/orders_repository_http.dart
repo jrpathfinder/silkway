@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/models/delivery.dart';
 import '../../../core/models/order.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/ports/orders_repository.dart';
@@ -19,6 +20,8 @@ class OrdersRepositoryHttp implements OrdersRepository {
     required String customerId,
     required List<CreateOrderLineInput> lines,
     required String idempotencyKey,
+    required FulfillmentType fulfillmentType,
+    DeliveryAddress? deliveryAddress,
   }) async {
     final res = await _client.dio.post(
       '/v1/orders',
@@ -28,6 +31,8 @@ class OrdersRepositoryHttp implements OrdersRepository {
         'lines': [
           for (final line in lines) {'itemId': line.itemId, 'quantity': line.quantity, 'modifierIds': line.modifierIds},
         ],
+        'fulfillmentType': fulfillmentType.toWire(),
+        if (deliveryAddress != null) 'deliveryAddress': deliveryAddress.toJson(),
       },
       options: Options(headers: {'Idempotency-Key': idempotencyKey}),
     );

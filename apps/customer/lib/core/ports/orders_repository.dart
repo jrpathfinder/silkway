@@ -1,3 +1,4 @@
+import '../models/delivery.dart';
 import '../models/order.dart';
 
 /// Контракт работы с заказами.
@@ -18,6 +19,8 @@ abstract class OrdersRepository {
     required String customerId,
     required List<CreateOrderLineInput> lines,
     required String idempotencyKey,
+    required FulfillmentType fulfillmentType,
+    DeliveryAddress? deliveryAddress,
   });
 
   Future<Order> getById(String orderId);

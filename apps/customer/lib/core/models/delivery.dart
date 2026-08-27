@@ -22,3 +22,29 @@ class DeliveryTrackingPoint {
   final double lng;
   final String label;
 }
+
+/// Адрес доставки, выбранный на карте при оформлении заказа. Пока без
+/// сохранения между заказами (нет адресной книги) — выбирается заново
+/// каждый раз, отдельная фича на будущее.
+class DeliveryAddress {
+  const DeliveryAddress({required this.lat, required this.lng, required this.addressText, this.comment});
+
+  final double lat;
+  final double lng;
+  final String addressText;
+  final String? comment;
+
+  Map<String, dynamic> toJson() => {
+        'lat': lat,
+        'lng': lng,
+        'addressText': addressText,
+        if (comment != null && comment!.isNotEmpty) 'comment': comment,
+      };
+
+  factory DeliveryAddress.fromJson(Map<String, dynamic> json) => DeliveryAddress(
+        lat: (json['lat'] as num).toDouble(),
+        lng: (json['lng'] as num).toDouble(),
+        addressText: json['addressText'] as String,
+        comment: json['comment'] as String?,
+      );
+}

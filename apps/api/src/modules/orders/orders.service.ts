@@ -3,12 +3,16 @@ import { randomUUID } from 'node:crypto';
 import { CatalogService } from '../catalog/catalog.service';
 import { LocationsService } from '../locations/locations.service';
 import { PaymentProvider } from '../integrations/ports/payment.port';
-import { Order } from './order.types';
+import { DeliveryAddress, FulfillmentType, Order } from './order.types';
 
 type CreateOrderInput = {
   locationId: string;
   customerId: string;
   lines: Array<{ itemId: string; quantity: number; modifierIds?: string[] }>;
+  /// Опционально ради обратной совместимости (существующие тесты не задают
+  /// его) — реальный клиент всегда передаёт явно, по умолчанию 'DELIVERY'.
+  fulfillmentType?: FulfillmentType;
+  deliveryAddress?: DeliveryAddress;
 };
 
 @Injectable()
@@ -58,6 +62,8 @@ export class OrdersService {
       totalRub: lines.reduce((sum, line) => sum + line.unitPriceRub * line.quantity, 0),
       status: 'PENDING_PAYMENT',
       createdAt: new Date().toISOString(),
+      fulfillmentType: input.fulfillmentType ?? 'DELIVERY',
+      deliveryAddress: input.deliveryAddress,
     };
     this.orders.set(order.id, order);
     if (idempotencyKey) this.idempotency.set(idempotencyKey, order.id);

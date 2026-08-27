@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:silkway_app/core/models/order.dart';
 import 'package:silkway_app/core/network/api_client.dart';
 import 'package:silkway_app/core/ports/orders_repository.dart';
 import 'package:silkway_app/features/orders/data/orders_repository_http.dart';
@@ -32,6 +33,7 @@ void main() {
       customerId: '+79990000000',
       lines: const [CreateOrderLineInput(itemId: 'plov-classic', quantity: 1, modifierIds: [])],
       idempotencyKey: 'key-1',
+      fulfillmentType: FulfillmentType.delivery,
     );
 
     expect(order.id, 'order-1');

@@ -9,6 +9,15 @@ export type OrderStatus =
   | 'CANCELLED'
   | 'REFUNDED';
 
+export type FulfillmentType = 'DELIVERY' | 'PICKUP';
+
+export type DeliveryAddress = {
+  lat: number;
+  lng: number;
+  addressText: string;
+  comment?: string;
+};
+
 export type OrderLine = {
   itemId: string;
   name: string;
@@ -26,4 +35,6 @@ export type Order = {
   status: OrderStatus;
   createdAt: string;
   paymentId?: string;
+  fulfillmentType: FulfillmentType;
+  deliveryAddress?: DeliveryAddress;
 };

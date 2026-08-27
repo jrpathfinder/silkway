@@ -1,3 +1,5 @@
+import 'delivery.dart';
+
 /// Заказ и его статус.
 ///
 /// Статус на проводе приходит в SCREAMING_SNAKE_CASE, отсюда [fromWire].
@@ -38,6 +40,15 @@ enum OrderStatus {
   }
 }
 
+enum FulfillmentType {
+  delivery,
+  pickup;
+
+  String toWire() => this == FulfillmentType.delivery ? 'DELIVERY' : 'PICKUP';
+
+  static FulfillmentType fromWire(String? value) => value == 'PICKUP' ? FulfillmentType.pickup : FulfillmentType.delivery;
+}
+
 class OrderLine {
   const OrderLine({
     required this.itemId,
@@ -72,6 +83,8 @@ class Order {
     required this.status,
     required this.createdAt,
     this.paymentId,
+    this.fulfillmentType = FulfillmentType.delivery,
+    this.deliveryAddress,
   });
 
   final String id;
@@ -82,6 +95,8 @@ class Order {
   final OrderStatus status;
   final DateTime createdAt;
   final String? paymentId;
+  final FulfillmentType fulfillmentType;
+  final DeliveryAddress? deliveryAddress;
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json['id'] as String,
@@ -94,5 +109,9 @@ class Order {
         status: OrderStatus.fromWire(json['status'] as String),
         createdAt: DateTime.parse(json['createdAt'] as String),
         paymentId: json['paymentId'] as String?,
+        fulfillmentType: FulfillmentType.fromWire(json['fulfillmentType'] as String?),
+        deliveryAddress: json['deliveryAddress'] == null
+            ? null
+            : DeliveryAddress.fromJson(json['deliveryAddress'] as Map<String, dynamic>),
       );
 }

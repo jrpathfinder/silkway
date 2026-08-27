@@ -65,6 +65,11 @@ void main() {
       expect(find.text('Самса с бараниной'), findsOneWidget);
       expect(find.text('К оплате'), findsOneWidget);
 
+      // По умолчанию выбрана доставка, а для неё нужен адрес — кнопка
+      // «Оплатить» недоступна, пока его не указали. Этот тест проверяет
+      // не доставку, а сам платёжный поток, поэтому переключаемся на
+      // самовывоз — так адрес не нужен.
+      await tapAndSettle(tester, find.text('Самовывоз'));
       await tester.tap(find.text('Оплатить'));
       await tester.pumpAndSettle();
 

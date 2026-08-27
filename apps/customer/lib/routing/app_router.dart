@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../app/flavor.dart';
 import '../core/l10n/gen/app_localizations.dart';
+import '../core/models/delivery.dart';
 import '../core/providers.dart';
 import '../features/auth/presentation/otp_verify_screen.dart';
 import '../features/auth/presentation/phone_entry_screen.dart';
@@ -12,6 +13,7 @@ import '../features/cart/presentation/cart_screen.dart';
 import '../features/catalog/presentation/home_screen.dart';
 import '../features/catalog/presentation/search_screen.dart';
 import '../features/courier/presentation/courier_home_screen.dart';
+import '../features/delivery/presentation/address_picker_screen.dart';
 import '../features/loyalty/presentation/promotions_screen.dart';
 import '../features/orders/presentation/checkout_screen.dart';
 import '../features/orders/presentation/order_history_screen.dart';
@@ -82,6 +84,10 @@ GoRouter _buildCustomerRouter(Ref ref) {
       GoRoute(
         path: '/checkout',
         builder: (context, state) => const CheckoutScreen(),
+      ),
+      GoRoute(
+        path: '/checkout/address',
+        builder: (context, state) => AddressPickerScreen(initial: state.extra as DeliveryAddress?),
       ),
       GoRoute(
         path: '/checkout/payment',

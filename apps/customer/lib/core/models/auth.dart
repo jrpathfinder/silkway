@@ -1,15 +1,20 @@
 /// Ответы бэкенда на запрос и проверку SMS-кода.
 class OtpRequestResult {
-  const OtpRequestResult({required this.accepted, required this.phone, required this.expiresInSeconds});
+  const OtpRequestResult({required this.accepted, required this.phone, required this.expiresInSeconds, this.devCode});
 
   final bool accepted;
   final String phone;
   final int expiresInSeconds;
 
+  /// Код в открытом виде — только пока бэкенд настроен на мок-провайдер SMS
+  /// (см. AuthService.requestOtp). С реальным sms.ru это поле отсутствует.
+  final String? devCode;
+
   factory OtpRequestResult.fromJson(Map<String, dynamic> json) => OtpRequestResult(
         accepted: json['accepted'] as bool,
         phone: json['phone'] as String,
         expiresInSeconds: json['expiresInSeconds'] as int,
+        devCode: json['devCode'] as String?,
       );
 }
 

@@ -79,6 +79,7 @@ GoRouter _buildCustomerRouter(Ref ref) {
         builder: (context, state) => OtpVerifyScreen(
           phone: state.uri.queryParameters['phone']!,
           returnTo: state.uri.queryParameters['returnTo'],
+          devCode: state.uri.queryParameters['devCode'],
         ),
       ),
       GoRoute(

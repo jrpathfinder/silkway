@@ -72,5 +72,18 @@
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Нужно, чтобы предложить ваш адрес при выборе места доставки.</string>
+	<!--
+	 Бэкенд (apps/api) отдаётся по обычному HTTP без TLS — это pre-production
+	 scaffolding, реального деплоя с HTTPS пока нет (см. CLAUDE.md). Без этого
+	 блока App Transport Security молча блокирует любой cleartext-запрос на
+	 физическом устройстве (симулятор такое разрешает для localhost, поэтому
+	 там не проявлялось): --dart-define=API_BASE_URL=http://<LAN IP>:3000
+	 просто не работал бы на реальном iPhone.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

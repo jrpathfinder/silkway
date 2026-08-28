@@ -19,7 +19,11 @@ export class AuthService {
     }
 
     await this.sms.send(phone, `Код подтверждения Шёлковый Путь: ${result.code}`);
-    return { accepted: true, phone, expiresInSeconds };
+    // Код в ответе только пока провайдер не настоящий (sms.ru): реальная SMS
+    // и так его доставит, а этот флаг только избавляет от чтения логов
+    // бэкенда при локальном тестировании. С sms.ru это поле не появляется.
+    const devCode = process.env.SMS_PROVIDER === 'sms.ru' ? undefined : result.code;
+    return { accepted: true, phone, expiresInSeconds, devCode };
   }
 
   verifyOtp(phone: string, code: string) {

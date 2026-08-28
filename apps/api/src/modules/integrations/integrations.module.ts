@@ -4,10 +4,10 @@ import { MockPaymentProvider } from './providers/mock-payment.provider';
 import { SmsProvider } from './ports/sms.port';
 import { MockSmsProvider } from './providers/mock-sms.provider';
 import { SmsRuProvider } from './providers/sms-ru.provider';
-import { IntegrationsController } from './integrations.controller';
+import { IntegrationsController, MockCheckoutController } from './integrations.controller';
 
 @Module({
-  controllers: [IntegrationsController],
+  controllers: [IntegrationsController, MockCheckoutController],
   providers: [
     { provide: PaymentProvider, useClass: MockPaymentProvider },
     // SMS_PROVIDER=sms.ru requires SMS_RU_API_ID — otherwise stays Mock

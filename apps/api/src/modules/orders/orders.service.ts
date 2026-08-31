@@ -144,7 +144,9 @@ export class OrdersService {
   }
 
   listForCustomer(customerId: string): Order[] {
-    return [...this.orders.values()].filter((order) => order.customerId === customerId);
+    return [...this.orders.values()]
+      .filter((order) => order.customerId === customerId)
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }
 
   /// Без фильтра — все заказы (для панели ресторана). Отдельные action-эндпоинты

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min, MinLength, ValidateNested } from 'class-validator';
 import { OrdersService } from './orders.service';
@@ -51,5 +51,14 @@ export class OrdersController {
   @Get(':orderId')
   get(@Param('orderId') orderId: string) {
     return { data: this.orders.get(orderId) };
+  }
+
+  /// «Мои заказы» в клиенте — ранее не было маршрута вовсе (см.
+  /// OrdersRepositoryHttp.listForCustomer), экран всегда падал с
+  /// UnimplementedError.
+  @Get()
+  listForCustomer(@Query('customerId') customerId?: string) {
+    if (!customerId) throw new BadRequestException('customerId is required');
+    return { data: this.orders.listForCustomer(customerId) };
   }
 }

@@ -6,9 +6,6 @@ import '../../../core/network/api_client.dart';
 import '../../../core/ports/orders_repository.dart';
 
 /// Заказы через бэкенд.
-///
-/// Создание и получение по id работают; список заказов покупателя — нет,
-/// роут для него на бэкенде не заведён.
 class OrdersRepositoryHttp implements OrdersRepository {
   OrdersRepositoryHttp(this._client);
 
@@ -47,9 +44,9 @@ class OrdersRepositoryHttp implements OrdersRepository {
 
   @override
   Future<List<Order>> listForCustomer(String customerId) async {
-    // No backend route exists for this yet (OrdersService.listForCustomer is
-    // never wired to a controller route in orders.controller.ts) — use mocks
-    // for this feature until it lands (see ADR-003).
-    throw UnimplementedError('No backend order-history endpoint yet.');
+    final res = await _client.dio.get('/v1/orders', queryParameters: {'customerId': customerId});
+    return (res.data['data'] as List<dynamic>)
+        .map((o) => Order.fromJson(o as Map<String, dynamic>))
+        .toList();
   }
 }

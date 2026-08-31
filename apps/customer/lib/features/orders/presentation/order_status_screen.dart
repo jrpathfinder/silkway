@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +20,7 @@ import 'providers/orders_providers.dart';
 ///
 /// Карты и позиции курьера здесь нет намеренно: `CourierRepository` — пустая
 /// заглушка, и рисовать движение курьера означало бы выдумать данные.
-class OrderStatusScreen extends ConsumerWidget {
+class OrderStatusScreen extends ConsumerStatefulWidget {
   const OrderStatusScreen({super.key, required this.orderId});
 
   final String orderId;
@@ -35,6 +37,8 @@ class OrderStatusScreen extends ConsumerWidget {
     OrderStatus.delivered,
   ];
 
+  static const _terminal = {OrderStatus.delivered, OrderStatus.cancelled, OrderStatus.refunded};
+
   static String label(OrderStatus status) => switch (status) {
         OrderStatus.pendingPayment => 'Ожидает оплаты',
         OrderStatus.paid => 'Оплачен',
@@ -48,8 +52,38 @@ class OrderStatusScreen extends ConsumerWidget {
       };
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final orderAsync = ref.watch(orderByIdProvider(orderId));
+  ConsumerState<OrderStatusScreen> createState() => _OrderStatusScreenState();
+}
+
+class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ресторан/курьер меняют статус через отдельные приложения — без опроса
+    // этот экран навсегда остался бы на статусе на момент открытия. Останов
+    // сам, как только заказ дойдёт до конечного статуса — дальше ему
+    // меняться некуда.
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      final current = ref.read(orderByIdProvider(widget.orderId)).valueOrNull;
+      if (current != null && OrderStatusScreen._terminal.contains(current.status)) {
+        timer.cancel();
+        return;
+      }
+      ref.invalidate(orderByIdProvider(widget.orderId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final orderAsync = ref.watch(orderByIdProvider(widget.orderId));
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -59,14 +93,14 @@ class OrderStatusScreen extends ConsumerWidget {
         error: (error, stack) => SwErrorState(
           title: 'Не удалось загрузить заказ',
           details: '$error',
-          onRetry: () => ref.invalidate(orderByIdProvider(orderId)),
+          onRetry: () => ref.invalidate(orderByIdProvider(widget.orderId)),
         ),
         data: (order) {
           final terminated = order.status == OrderStatus.cancelled || order.status == OrderStatus.refunded;
           return ListView(
             padding: const EdgeInsets.fromLTRB(SwSpacing.screenH, SwSpacing.md, SwSpacing.screenH, SwSpacing.xxxl),
             children: [
-              Text(label(order.status), style: SwTypography.h1.copyWith(color: scheme.onSurface)),
+              Text(OrderStatusScreen.label(order.status), style: SwTypography.h1.copyWith(color: scheme.onSurface)),
               const SizedBox(height: SwSpacing.xs),
               Text('Заказ ${order.id}', style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant)),
               const SizedBox(height: SwSpacing.xxl),

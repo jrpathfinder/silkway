@@ -31,6 +31,7 @@ class _PaymentWebviewScreenState extends ConsumerState<PaymentWebviewScreen> {
   WebViewController? _webViewController;
   Timer? _pollTimer;
   Object? _error;
+  bool _pageLoading = true;
 
   @override
   void initState() {
@@ -52,6 +53,16 @@ class _PaymentWebviewScreenState extends ConsumerState<PaymentWebviewScreen> {
 
       _webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageStarted: (_) {
+              if (mounted) setState(() => _pageLoading = true);
+            },
+            onPageFinished: (_) {
+              if (mounted) setState(() => _pageLoading = false);
+            },
+          ),
+        )
         ..loadRequest(Uri.parse(checkout.confirmationUrl));
       _pollTimer = Timer.periodic(const Duration(seconds: 3), _poll);
       if (mounted) setState(() {});
@@ -89,7 +100,12 @@ class _PaymentWebviewScreenState extends ConsumerState<PaymentWebviewScreen> {
           ? SwErrorState(title: 'Не удалось начать оплату', details: '$_error', onRetry: _start)
           : _webViewController == null
               ? const Center(child: CircularProgressIndicator())
-              : WebViewWidget(controller: _webViewController!),
+              : Stack(
+                  children: [
+                    WebViewWidget(controller: _webViewController!),
+                    if (_pageLoading) const Center(child: CircularProgressIndicator()),
+                  ],
+                ),
     );
   }
 }

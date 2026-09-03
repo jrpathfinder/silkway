@@ -5,10 +5,11 @@ import { IntegrationsModule } from '../integrations/integrations.module';
 import { CourierOrdersController } from './courier-orders.controller';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { PaymentWebhookController } from './payment-webhook.controller';
 
 @Module({
   imports: [CatalogModule, LocationsModule, IntegrationsModule],
-  controllers: [OrdersController, CourierOrdersController],
+  controllers: [OrdersController, CourierOrdersController, PaymentWebhookController],
   providers: [OrdersService],
   exports: [OrdersService],
 })

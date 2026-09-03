@@ -2,11 +2,8 @@ import { Body, Controller, Get, Header, Param, Post, Query } from '@nestjs/commo
 
 @Controller('webhooks')
 export class IntegrationsController {
-  @Post('payments/:provider')
-  paymentWebhook(@Param('provider') provider: string, @Body() payload: Record<string, unknown>) {
-    // Production: verify provider signature, persist event id, then process through an outbox.
-    return { accepted: true, provider, eventId: payload.id ?? null };
-  }
+  // Платёжный вебхук переехал в orders/payment-webhook.controller.ts — ему
+  // нужен OrdersService, а сюда он не дотягивается (см. комментарий там).
 
   @Post('delivery/:provider')
   deliveryWebhook(@Param('provider') provider: string, @Body() payload: Record<string, unknown>) {
@@ -54,6 +51,30 @@ export class MockCheckoutController {
       }
     }
   </script>
+</body></html>`;
+  }
+}
+
+/// Куда ЮKassa возвращает браузер/вебвью после хостинг-страницы оплаты.
+/// Это НЕ источник истины о статусе — просто человекочитаемая точка выхода;
+/// статус меняет только вебхук (PaymentWebhookController), а клиент вдобавок
+/// сам опрашивает GET /v1/orders/:id, пока открыт экран оплаты.
+@Controller('payments/yookassa')
+export class YookassaReturnController {
+  @Get('return')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  page() {
+    return `<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оплата</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 32px 20px; text-align: center; color: #2a211a; }
+  p { color: #857d73; }
+</style></head>
+<body>
+  <h2>Спасибо!</h2>
+  <p>Можно вернуться в приложение — статус заказа обновится автоматически.</p>
 </body></html>`;
   }
 }

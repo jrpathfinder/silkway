@@ -39,7 +39,7 @@ The API auto-applies `apps/api/src/database/schema.sql` on boot when `DATABASE_U
 
 **`OrdersService` is still fully in-memory** (`Map`-based, not yet wired to the `order_header`/`order_event`/`outbox_event` tables already defined in `schema.sql`). The schema is ahead of the service implementation — don't assume orders are persisted just because the tables exist.
 
-**External providers are behind ports, not called directly.** `apps/api/src/modules/integrations/ports/*.port.ts` defines abstract classes (`PaymentProvider`, `DeliveryProvider`, `MarketplacePort`, `SmsProvider`) that domain code depends on. `integrations.module.ts` binds each port to a concrete provider via Nest's `useClass` (`PaymentProvider` is hardcoded to `MockPaymentProvider`; `SmsProvider` switches on `SMS_PROVIDER` env var between `MockSmsProvider` — logs the code instead of sending it — and `SmsRuProvider`, which is a real, working [sms.ru](https://sms.ru) integration gated behind `SMS_RU_API_ID`; delivery/marketplace providers are still stubs). This is ADR-002 (see [docs/adr/002-provider-adapters.md](docs/adr/002-provider-adapters.md)): real ЮKassa/Yandex Delivery/Yandex Eda integrations get added as new provider classes bound in the same place, without touching domain services. When testing domain services, inject a fake implementing the port interface directly (see `orders.service.spec.ts`'s `TestPaymentProvider`, `auth.service.spec.ts`'s `TestSmsProvider`) rather than mocking a library.
+**External providers are behind ports, not called directly.** `apps/api/src/modules/integrations/ports/*.port.ts` defines abstract classes (`PaymentProvider`, `DeliveryProvider`, `MarketplacePort`, `SmsProvider`) that domain code depends on. `integrations.module.ts` binds each port to a concrete provider via Nest's `useClass`, each switchable via an env var so mock stays the safe default: `PaymentProvider` switches on `PAYMENT_PROVIDER` between `MockPaymentProvider` and `YookassaPaymentProvider` (real ЮKassa REST API v3, gated behind `YOOKASSA_SHOP_ID`/`YOOKASSA_SECRET_KEY` — webhook verification lives in `apps/api/src/modules/orders/payment-webhook.controller.ts`, not in `integrations/`, because it needs `OrdersService`); `SmsProvider` switches on `SMS_PROVIDER` between `MockSmsProvider` — logs the code instead of sending it — and `SmsRuProvider`, a real [sms.ru](https://sms.ru) integration gated behind `SMS_RU_API_ID`. Delivery/marketplace providers are still stubs — no concrete class exists for either port yet, not even a mock, and neither is bound in `integrations.module.ts`. This is ADR-002 (see [docs/adr/002-provider-adapters.md](docs/adr/002-provider-adapters.md)): real Yandex Delivery/Yandex Eda integrations get added as new provider classes bound in the same place, without touching domain services. When testing domain services, inject a fake implementing the port interface directly (see `orders.service.spec.ts`'s `TestPaymentProvider`, `auth.service.spec.ts`'s `TestSmsProvider`) rather than mocking a library.
 
 **Server-side price snapshots.** `OrdersService.create` always re-fetches the catalog and recomputes item/modifier prices server-side — client-submitted prices are never trusted. `Idempotency-Key` is honored via an in-memory key→orderId map. Any change to order creation needs to preserve both of these invariants.
 
@@ -49,11 +49,11 @@ The API auto-applies `apps/api/src/database/schema.sql` on boot when `DATABASE_U
 
 **`packages/contracts`** holds shared TS types (e.g. `Location`, `OrderStatus`) meant to be consumed by both `apps/api` and `apps/admin`; keep API DTOs and admin types in sync with it rather than redefining shapes locally.
 
-**`apps/admin`** is presently a single hardcoded `index.ts` rendering static mock order data into the DOM — no framework, no API calls yet, no build tooling beyond `tsc`.
+**`apps/admin`** is a real Vite + React app (`src/App.tsx` + `src/components/*Panel.tsx`) with password login (`AdminAuthGuard`, HMAC-signed bearer token) and real API calls against `apps/api/src/modules/admin/*`: an Orders tab (accept/prepare/ready, 5s auto-refresh), catalog CRUD (categories/items/modifiers), promotions, and catalog import/export.
 
 ## Domain flow (direct orders)
 
-Customer selects location → server-priced cart snapshot → order created `PENDING_PAYMENT` with idempotency key → payment adapter creates checkout → verified webhook moves order to `PAID` → restaurant accepts → delivery adapter creates delivery → provider events update status → outbox/reconciliation retries unfinished external calls. Full detail in [docs/architecture.md](docs/architecture.md) (Russian).
+Customer selects location → server-priced cart snapshot → order created `PENDING_PAYMENT` with idempotency key → payment adapter creates checkout → verified webhook moves order to `PAID` (real for ЮKassa — see `PaymentWebhookController`; the client also polls `GET /v1/orders/:id` while the payment screen is open, since it never trusts the webhook's own redirect) → restaurant accepts → delivery adapter creates delivery → provider events update status → outbox/reconciliation retries unfinished external calls. Full detail in [docs/architecture.md](docs/architecture.md) (Russian) and [docs/wiki/](docs/wiki/en/README.md) (bilingual reference, updated as work lands).
 
 ## Linear sync
 
@@ -66,6 +66,20 @@ FR/NFR backlog is tracked in Linear, workspace `silkway`, team `Silkway` (key `S
 - Never merge a PR without explicit user approval, regardless of Linear status.
 
 **PR titles** follow `[SIL-XX] type: short description` — `SIL-XX` is the Linear issue the PR's work is scoped to (the one being moved to `In Progress`/commented on above), `type` is a conventional-commit-style prefix (`feat`, `fix`, `chore`, `refactor`, ...), and the description is a short imperative summary. When a PR spans multiple epics (e.g. a foundational scaffold), list every issue it actually touches as a comma-separated bracket: `[SIL-1, SIL-2, ...] type: short description` — only include issues with real corresponding work, not every issue that exists.
+
+## Daily workflow
+
+At the start of the first session on a given calendar day, before diving into new work:
+
+- Recap where things stand: what shipped since the last recap (real, tested, committed — not "written but unverified"), and what's still open against the epics currently in flight. Ground this in `git log`, current Linear issue states, and open PRs — don't reconstruct it purely from memory of a prior conversation, since memory can go stale.
+- Check whether anything committed since the last recap still needs a Linear comment (see Linear sync below) or still needs pushing/a PR — this is the most common thing to drift out of sync when a session ends mid-task.
+- Note it explicitly if a PR has been open for a while without merging — don't merge it yourself, just surface it so the user can decide.
+
+This is a recap for orientation, not a blocking checklist — if the user asks for something specific, do that; give the recap alongside it or when a new day's work is starting cold.
+
+## Wiki
+
+[docs/wiki/](docs/wiki/en/README.md) is a bilingual (EN + RU, mirrored folders `docs/wiki/en/` and `docs/wiki/ru/`) reference layer above the code — architecture at a glance, integrations status, local dev/testing setup. It's meant to stay current: when a piece of work changes something a wiki page describes (an integration goes from stub to real, a new gotcha is discovered, a convention changes), update the relevant page in **both** languages as part of that work, not as a separate cleanup pass later. `docs/architecture.md`, `docs/api.md`, and the ADRs remain the detailed/authoritative sources for their specific topics — the wiki links out to them rather than duplicating.
 
 ## Non-obvious conventions
 

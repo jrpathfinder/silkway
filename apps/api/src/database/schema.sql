@@ -139,6 +139,14 @@ create table if not exists order_header (
   created_at timestamptz not null default now()
 );
 
+-- "create table if not exists" above doesn't add columns to an already-
+-- created table — this covers both a fresh database and the schema's own
+-- prior shape (OrdersService was fully in-memory before, so no order data
+-- is lost by adding this). Holds everything about what was ordered that
+-- doesn't have its own table: line items, fulfillment type, delivery
+-- address. See OrdersService.mapRow / buildOrderLines in orders.service.ts.
+alter table order_header add column if not exists details jsonb not null default '{}'::jsonb;
+
 create table if not exists order_event (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references order_header(id),

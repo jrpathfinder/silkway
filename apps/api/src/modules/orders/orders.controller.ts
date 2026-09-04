@@ -41,24 +41,25 @@ export class OrdersController {
     return this.orders.createCheckout(orderId).then((payment) => ({ data: payment }));
   }
 
-  /// Заглушка на месте реальной обработки платёжного вебхука (см.
-  /// IntegrationsController.paymentWebhook и OrdersService.markPaidForDemo).
+  /// Ручной путь к оплате для мок-провайдера — единственный способ
+  /// подтвердить оплату без реального вебхука (см. OrdersService.markPaidForDemo
+  /// и, для ЮKassa, PaymentWebhookController).
   @Post(':orderId/mark-paid-demo')
-  markPaidDemo(@Param('orderId') orderId: string) {
-    return { data: this.orders.markPaidForDemo(orderId) };
+  async markPaidDemo(@Param('orderId') orderId: string) {
+    return { data: await this.orders.markPaidForDemo(orderId) };
   }
 
   @Get(':orderId')
-  get(@Param('orderId') orderId: string) {
-    return { data: this.orders.get(orderId) };
+  async get(@Param('orderId') orderId: string) {
+    return { data: await this.orders.get(orderId) };
   }
 
   /// «Мои заказы» в клиенте — ранее не было маршрута вовсе (см.
   /// OrdersRepositoryHttp.listForCustomer), экран всегда падал с
   /// UnimplementedError.
   @Get()
-  listForCustomer(@Query('customerId') customerId?: string) {
+  async listForCustomer(@Query('customerId') customerId?: string) {
     if (!customerId) throw new BadRequestException('customerId is required');
-    return { data: this.orders.listForCustomer(customerId) };
+    return { data: await this.orders.listForCustomer(customerId) };
   }
 }

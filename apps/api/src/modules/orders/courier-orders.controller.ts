@@ -11,13 +11,13 @@ export class CourierOrdersController {
   constructor(private readonly orders: OrdersService) {}
 
   @Get('offered')
-  offered() {
-    return { data: this.orders.listByStatuses(['READY_FOR_DELIVERY']) };
+  async offered() {
+    return { data: await this.orders.listByStatuses(['READY_FOR_DELIVERY']) };
   }
 
   @Post(':id/accept')
-  accept(@Param('id') id: string) {
-    return { data: this.orders.courierAccept(id) };
+  async accept(@Param('id') id: string) {
+    return { data: await this.orders.courierAccept(id) };
   }
 
   @Post(':id/deny')
@@ -28,7 +28,7 @@ export class CourierOrdersController {
   }
 
   @Post(':id/deliver')
-  deliver(@Param('id') id: string) {
-    return { data: this.orders.markDelivered(id) };
+  async deliver(@Param('id') id: string) {
+    return { data: await this.orders.markDelivered(id) };
   }
 }

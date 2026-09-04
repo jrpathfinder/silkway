@@ -27,22 +27,22 @@ export class AdminOrdersController {
   constructor(private readonly orders: OrdersService) {}
 
   @Get()
-  list(@Query('status') status?: string) {
-    return { data: this.orders.listByStatuses(parseStatuses(status)) };
+  async list(@Query('status') status?: string) {
+    return { data: await this.orders.listByStatuses(parseStatuses(status)) };
   }
 
   @Post(':id/accept')
-  accept(@Param('id') id: string) {
-    return { data: this.orders.accept(id) };
+  async accept(@Param('id') id: string) {
+    return { data: await this.orders.accept(id) };
   }
 
   @Post(':id/prepare')
-  prepare(@Param('id') id: string) {
-    return { data: this.orders.startPreparing(id) };
+  async prepare(@Param('id') id: string) {
+    return { data: await this.orders.startPreparing(id) };
   }
 
   @Post(':id/ready')
-  ready(@Param('id') id: string) {
-    return { data: this.orders.markReadyForDelivery(id) };
+  async ready(@Param('id') id: string) {
+    return { data: await this.orders.markReadyForDelivery(id) };
   }
 }

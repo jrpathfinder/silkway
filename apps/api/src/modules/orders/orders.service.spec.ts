@@ -12,7 +12,14 @@ class TestPaymentProvider implements PaymentProvider {
 }
 
 describe('OrdersService', () => {
-  const service = new OrdersService(new CatalogService({ enabled: false } as never), new LocationsService(), new TestPaymentProvider());
+  // { enabled: false } exercises the in-memory fallback, same as
+  // CatalogService's own tests just above — no Postgres needed to run these.
+  const service = new OrdersService(
+    new CatalogService({ enabled: false } as never),
+    new LocationsService(),
+    new TestPaymentProvider(),
+    { enabled: false } as never,
+  );
 
   it('takes a server-side price snapshot and is idempotent', async () => {
     const input = { locationId: 'ca-moscow-1', customerId: 'customer-1', lines: [{ itemId: 'plov-classic', quantity: 2 }] };
@@ -31,7 +38,7 @@ describe('OrdersService', () => {
     const order = await service.create({ locationId: 'ca-moscow-1', customerId: 'customer-2', lines: [{ itemId: 'samsa-lamb', quantity: 1 }] });
     const payment = await service.createCheckout(order.id);
     expect(payment.confirmationUrl).toContain('https://pay.example');
-    expect(service.get(order.id).paymentId).toBe('payment-1');
+    expect((await service.get(order.id)).paymentId).toBe('payment-1');
   });
 
   it('accepts a delivery address inside the Moscow zone', async () => {
@@ -91,28 +98,28 @@ describe('OrdersService', () => {
       fulfillmentType: 'PICKUP',
     });
 
-    expect(() => service.accept(order.id)).toThrow(BadRequestException);
+    await expect(service.accept(order.id)).rejects.toThrow(BadRequestException);
 
-    service.markPaidForDemo(order.id);
-    expect(service.get(order.id).status).toBe('PAID');
-    expect(service.listByStatuses(['PAID']).map((o) => o.id)).toContain(order.id);
+    await service.markPaidForDemo(order.id);
+    expect((await service.get(order.id)).status).toBe('PAID');
+    expect((await service.listByStatuses(['PAID'])).map((o) => o.id)).toContain(order.id);
 
-    service.accept(order.id);
-    expect(service.get(order.id).status).toBe('ACCEPTED');
+    await service.accept(order.id);
+    expect((await service.get(order.id)).status).toBe('ACCEPTED');
 
-    service.startPreparing(order.id);
-    expect(service.get(order.id).status).toBe('PREPARING');
+    await service.startPreparing(order.id);
+    expect((await service.get(order.id)).status).toBe('PREPARING');
 
-    service.markReadyForDelivery(order.id);
-    expect(service.get(order.id).status).toBe('READY_FOR_DELIVERY');
-    expect(service.listByStatuses(['READY_FOR_DELIVERY']).map((o) => o.id)).toContain(order.id);
+    await service.markReadyForDelivery(order.id);
+    expect((await service.get(order.id)).status).toBe('READY_FOR_DELIVERY');
+    expect((await service.listByStatuses(['READY_FOR_DELIVERY'])).map((o) => o.id)).toContain(order.id);
 
-    service.courierAccept(order.id);
-    expect(service.get(order.id).status).toBe('IN_DELIVERY');
+    await service.courierAccept(order.id);
+    expect((await service.get(order.id)).status).toBe('IN_DELIVERY');
 
-    service.markDelivered(order.id);
-    expect(service.get(order.id).status).toBe('DELIVERED');
+    await service.markDelivered(order.id);
+    expect((await service.get(order.id)).status).toBe('DELIVERED');
 
-    expect(() => service.accept(order.id)).toThrow(BadRequestException);
+    await expect(service.accept(order.id)).rejects.toThrow(BadRequestException);
   });
 });

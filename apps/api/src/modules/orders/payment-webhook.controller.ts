@@ -41,7 +41,7 @@ export class PaymentWebhookController {
     }
 
     try {
-      this.orders.markPaidForDemo(orderId);
+      await this.orders.markPaidForDemo(orderId);
     } catch (error) {
       // Например, повторный вебхук после того, как заказ уже не в
       // PENDING_PAYMENT — не ошибка на нашей стороне, просто дубликат.

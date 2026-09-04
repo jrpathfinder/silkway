@@ -31,7 +31,7 @@ export class AuthController {
   }
 
   @Post('verify')
-  verify(@Body() body: VerifyOtpDto) {
-    return { data: this.auth.verifyOtp(body.phone, body.code) };
+  async verify(@Body() body: VerifyOtpDto) {
+    return { data: await this.auth.verifyOtp(body.phone, body.code) };
   }
 }

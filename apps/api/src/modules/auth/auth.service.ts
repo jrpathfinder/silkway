@@ -11,7 +11,7 @@ export class AuthService {
 
   async requestOtp(phone: string) {
     const expiresInSeconds = Number(process.env.OTP_TTL_SECONDS ?? 300);
-    const result = this.otpStore.generateAndStore(phone, expiresInSeconds);
+    const result = await this.otpStore.generateAndStore(phone, expiresInSeconds);
     if (!result.allowed) {
       // accepted:false с валидным expiresInSeconds — контракт с клиентом не
       // меняется (OtpRequestResult.fromJson требует это поле всегда).
@@ -26,8 +26,8 @@ export class AuthService {
     return { accepted: true, phone, expiresInSeconds, devCode };
   }
 
-  verifyOtp(phone: string, code: string) {
-    const verified = this.otpStore.verify(phone, code);
+  async verifyOtp(phone: string, code: string) {
+    const verified = await this.otpStore.verify(phone, code);
     // Реальная сессия/JWT — отдельная, ещё не сделанная задача (см. ADR-003
     // про отсутствие customerId в этом ответе); здесь чинится только
     // генерация/доставка/проверка кода.

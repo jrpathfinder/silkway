@@ -11,6 +11,14 @@ All four ports live in `apps/api/src/modules/integrations/ports/*.port.ts`. Conc
 - **Switch**: `SMS_PROVIDER=mock|sms.ru`, real mode needs `SMS_RU_API_ID`
 - **Status**: code works and was verified against the real sms.ru API. Currently blocked *externally*, not in code — sms.ru rejects delivery until the account registers a sender name (буквенное имя отправителя) at sms.ru's sender panel. No code changes needed once that's approved — just flip `SMS_PROVIDER` back to `sms.ru`.
 - **Dev convenience**: when on the mock provider, `AuthService.requestOtp`'s response includes a `devCode` field with the real code — the Flutter app shows it inline on the OTP screen, no server-log reading required. This field is never present when the real provider is active.
+- **Rate limiting**: `OtpStore` is Redis-backed when `REDIS_URL` is set, falling back to an in-process `Map` otherwise (same optional shape as `DatabaseService`) — see [CLAUDE.md](../../../CLAUDE.md).
+
+## Photos (catalog items) — self-hosted, code-complete
+
+- **No port/provider here** — unlike the other four, this isn't a swappable third-party integration, just local disk storage behind an upload endpoint.
+- **Upload**: `AdminUploadsController` (`admin-uploads.controller.ts`), `POST /v1/admin/uploads`, admin-auth-gated, JPEG/PNG/WebP only, 5MB max. Writes to `UPLOADS_DIR` (default `apps/api/uploads/`) and returns an absolute URL (`PUBLIC_BASE_URL` + path) to store as `CatalogItem.imageUrl`.
+- **Serving**: a static-assets mount in `main.ts`, not a Nest route — plain files, same as a CDN would serve.
+- **Not required**: `imageUrl` is still just a string column — pasting an external URL directly (the seeded menu currently uses Yandex Eda's own CDN this way) works exactly as before. The admin panel's item form offers both: a URL field and a file-picker upload that fills it in.
 
 ## Payment — real, code-complete
 

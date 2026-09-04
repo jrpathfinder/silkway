@@ -24,7 +24,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     if (!this.pool) return;
 
-    const schemaPath = join(process.cwd(), 'src/database/schema.sql');
+    // Relative to this compiled file's own location, not the process cwd —
+    // "npm run start:dev" (ts-node, cwd = apps/api) and "node dist/main.js"
+    // (production, cwd could be anything) both resolve correctly this way.
+    // The build script copies schema.sql next to the compiled .js for this.
+    const schemaPath = join(__dirname, 'schema.sql');
     const schema = await readFile(schemaPath, 'utf8');
     await this.pool.query(schema);
     this.logger.log('PostgreSQL schema is ready.');

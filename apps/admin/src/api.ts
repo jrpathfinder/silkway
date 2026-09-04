@@ -33,8 +33,27 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body.data as T;
 }
 
+async function uploadImage(file: File): Promise<{ url: string }> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE_URL}/admin/uploads`, { method: 'POST', headers, body: form });
+  if (res.status === 401) {
+    setToken(null);
+    throw new ApiError(401, 'Сессия истекла — войдите заново');
+  }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, body.message ?? `Ошибка ${res.status}`);
+  return body.data as { url: string };
+}
+
 export const api = {
   login: (password: string) => request<{ token: string; expiresAt: string }>('/admin/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
+
+  uploadImage,
 
   listCategories: () => request<Category[]>('/admin/catalog/categories'),
   createCategory: (input: { id?: string; name: string; sortOrder?: number }) =>

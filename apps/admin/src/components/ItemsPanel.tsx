@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { Category, Item, Modifier } from '../types';
 
@@ -95,6 +95,7 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [modifiers, setModifiers] = useState<Modifier[]>([]);
   const [modifierDraft, setModifierDraft] = useState({ name: '', priceRub: '' });
+  const [uploading, setUploading] = useState(false);
 
   const categoryName = useMemo(() => {
     const map = new Map(categories.map((c) => [c.id, c.name]));
@@ -159,6 +160,22 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
       load();
     } catch (err) {
       handleError(err);
+    }
+  };
+
+  const uploadImage = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let picking the same file again re-trigger onChange
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const { url } = await api.uploadImage(file);
+      setDraft((d) => ({ ...d, imageUrl: url }));
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -241,6 +258,14 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
               Фото (URL)
               <input value={draft.imageUrl} onChange={(e) => setDraft({ ...draft, imageUrl: e.target.value })} />
             </label>
+            <label>
+              Загрузить фото со своего компьютера
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} disabled={uploading} />
+            </label>
+            {uploading && <span className="muted">Загрузка…</span>}
+            {draft.imageUrl && !uploading && (
+              <img src={draft.imageUrl} alt="" className="image-preview" />
+            )}
             <label className="span-2">
               Описание
               <textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} rows={2} />

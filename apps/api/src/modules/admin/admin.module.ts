@@ -8,10 +8,11 @@ import { AdminImportExportService } from './admin-import-export.service';
 import { AdminOrdersController } from './admin-orders.controller';
 import { AdminPromotionsController } from './admin-promotions.controller';
 import { AdminPromotionsService } from './admin-promotions.service';
+import { AdminUploadsController } from './admin-uploads.controller';
 
 @Module({
   imports: [OrdersModule],
-  controllers: [AdminAuthController, AdminCatalogController, AdminPromotionsController, AdminOrdersController],
+  controllers: [AdminAuthController, AdminCatalogController, AdminPromotionsController, AdminOrdersController, AdminUploadsController],
   providers: [AdminAuthService, AdminCatalogService, AdminPromotionsService, AdminImportExportService],
 })
 export class AdminModule {}

@@ -13,5 +13,35 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+
+  # Containerized API — NOT part of the default `docker compose up -d` (that
+  # command stays just Postgres+Redis, for the documented local-dev flow of
+  # running the API directly via `npm --workspace apps/api run start:dev`).
+  # Opt in with `docker compose --profile full up -d --build` to run the API
+  # itself in a container too, e.g. to smoke-test apps/api/Dockerfile before
+  # a real deploy. Reads apps/api/.env for most config (copy it from
+  # .env.example first) but overrides DATABASE_URL/REDIS_URL to the
+  # container-network hostnames below, since "localhost" from inside this
+  # container means the container itself, not the postgres/redis services.
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    profiles: ["full"]
+    env_file:
+      - ../apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://central_asia:local_dev_only@postgres:5432/central_asia
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads-data:/app/apps/api/uploads
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   postgres-data:
+  uploads-data:

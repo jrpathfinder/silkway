@@ -7,10 +7,12 @@ import { AdminModule } from './modules/admin/admin.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { DatabaseModule } from './database/database.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    RedisModule,
     HealthModule,
     LocationsModule,
     CatalogModule,

@@ -31,14 +31,14 @@ describe('AuthService', () => {
     await service.requestOtp('+79990000001');
     const code = sms.sent[0].message.match(/\d{6}/)![0];
 
-    const result = service.verifyOtp('+79990000001', code) as { accessToken: string; user: { phone: string } };
+    const result = (await service.verifyOtp('+79990000001', code)) as { accessToken: string; user: { phone: string } };
     expect(result.accessToken).toBe('dev-access-token');
     expect(result.user.phone).toBe('+79990000001');
   });
 
   it('rejects a wrong code', async () => {
     await service.requestOtp('+79990000002');
-    const result = service.verifyOtp('+79990000002', '000000');
+    const result = await service.verifyOtp('+79990000002', '000000');
     expect(result).toEqual({ verified: false });
   });
 

@@ -60,51 +60,33 @@ function shortId(id: string): string {
 /// Звуковой сигнал, пока есть хоть один оплаченный, но не принятый заказ —
 /// не один раз, а повторяется, чтобы не потерялось, если никто не смотрит на
 /// экран в момент оплаты. Останавливается сам, как только все приняты.
-/// Удар половника по казану — а не абстрактный писк, тематика ресторана
-/// восточной кухни. Два слоя: короткий шумовой «щелчок» контакта металла о
-/// металл через полосовой фильтр, и несколько НЕгармонических частот с
-/// разным временем затухания — именно негармоничность (не кратные друг
-/// другу частоты, как у настоящего колокола) даёт узнаваемый «дребезжащий»
-/// призвук металла, а не музыкальный тон. Низкие частоты звенят дольше
-/// высоких — так же гаснут реальные удары по металлу.
-function strikeKazan(ctx: AudioContext, destination: AudioNode) {
+/// Короткий двухтональный «пинг» в духе мессенджеров конца 90-х — не
+/// сэмпл (реальный звук ICQ — чужой авторский актив, который нельзя
+/// встраивать в продукт), а собственный синтез той же идеи: две короткие
+/// восходящие ноты чистым тоном. Второй тон чуть громче и длиннее первого —
+/// на этом держится узнаваемость всей категории таких сигналов.
+function pingNotification(ctx: AudioContext, destination: AudioNode) {
   const now = ctx.currentTime;
   const master = ctx.createGain();
   master.gain.value = 0.5;
   master.connect(destination);
 
-  const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.03), ctx.sampleRate);
-  const noiseData = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < noiseData.length; i++) noiseData[i] = Math.random() * 2 - 1;
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
-  const noiseFilter = ctx.createBiquadFilter();
-  noiseFilter.type = 'bandpass';
-  noiseFilter.frequency.value = 2200;
-  noiseFilter.Q.value = 1.2;
-  const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(0.7, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-  noise.connect(noiseFilter).connect(noiseGain).connect(master);
-  noise.start(now);
-  noise.stop(now + 0.05);
-
-  const partials: Array<[frequencyHz: number, level: number, decaySeconds: number]> = [
-    [210, 1, 0.9],
-    [483, 0.5, 0.6],
-    [799, 0.32, 0.4],
-    [1094, 0.18, 0.25],
+  const notes: Array<[frequencyHz: number, startOffset: number, duration: number, level: number]> = [
+    [659, 0, 0.11, 0.35], // E5
+    [988, 0.1, 0.16, 0.45], // B5
   ];
-  for (const [frequencyHz, level, decaySeconds] of partials) {
+  for (const [frequencyHz, startOffset, duration, level] of notes) {
+    const start = now + startOffset;
     const osc = ctx.createOscillator();
-    osc.type = 'triangle';
+    osc.type = 'sine';
     osc.frequency.value = frequencyHz;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(level * 0.5, now + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + decaySeconds);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(level, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     osc.connect(gain).connect(master);
-    osc.start(now);
-    osc.stop(now + decaySeconds + 0.05);
+    osc.start(start);
+    osc.stop(start + duration + 0.02);
   }
 }
 
@@ -119,13 +101,13 @@ function useUnacceptedAlertSound(hasUnaccepted: boolean) {
       return;
     }
 
-    const strike = () => {
+    const ping = () => {
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-      strikeKazan(ctx, ctx.destination);
+      pingNotification(ctx, ctx.destination);
     };
 
-    strike();
-    const interval = setInterval(strike, 4000);
+    ping();
+    const interval = setInterval(ping, 4000);
     return () => {
       clearInterval(interval);
       ctx.close().catch(() => {});

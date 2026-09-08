@@ -60,7 +60,54 @@ function shortId(id: string): string {
 /// Звуковой сигнал, пока есть хоть один оплаченный, но не принятый заказ —
 /// не один раз, а повторяется, чтобы не потерялось, если никто не смотрит на
 /// экран в момент оплаты. Останавливается сам, как только все приняты.
-/// Генерируется через Web Audio API — без внешнего аудиофайла.
+/// Удар половника по казану — а не абстрактный писк, тематика ресторана
+/// восточной кухни. Два слоя: короткий шумовой «щелчок» контакта металла о
+/// металл через полосовой фильтр, и несколько НЕгармонических частот с
+/// разным временем затухания — именно негармоничность (не кратные друг
+/// другу частоты, как у настоящего колокола) даёт узнаваемый «дребезжащий»
+/// призвук металла, а не музыкальный тон. Низкие частоты звенят дольше
+/// высоких — так же гаснут реальные удары по металлу.
+function strikeKazan(ctx: AudioContext, destination: AudioNode) {
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.value = 0.5;
+  master.connect(destination);
+
+  const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.03), ctx.sampleRate);
+  const noiseData = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < noiseData.length; i++) noiseData[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuffer;
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = 2200;
+  noiseFilter.Q.value = 1.2;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.7, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  noise.connect(noiseFilter).connect(noiseGain).connect(master);
+  noise.start(now);
+  noise.stop(now + 0.05);
+
+  const partials: Array<[frequencyHz: number, level: number, decaySeconds: number]> = [
+    [210, 1, 0.9],
+    [483, 0.5, 0.6],
+    [799, 0.32, 0.4],
+    [1094, 0.18, 0.25],
+  ];
+  for (const [frequencyHz, level, decaySeconds] of partials) {
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = frequencyHz;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(level * 0.5, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + decaySeconds);
+    osc.connect(gain).connect(master);
+    osc.start(now);
+    osc.stop(now + decaySeconds + 0.05);
+  }
+}
+
 function useUnacceptedAlertSound(hasUnaccepted: boolean) {
   useEffect(() => {
     if (!hasUnaccepted) return;
@@ -72,23 +119,13 @@ function useUnacceptedAlertSound(hasUnaccepted: boolean) {
       return;
     }
 
-    const beep = () => {
+    const strike = () => {
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.35);
+      strikeKazan(ctx, ctx.destination);
     };
 
-    beep();
-    const interval = setInterval(beep, 4000);
+    strike();
+    const interval = setInterval(strike, 4000);
     return () => {
       clearInterval(interval);
       ctx.close().catch(() => {});

@@ -87,20 +87,20 @@ function draftToPayload(draft: Draft) {
   };
 }
 
-export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
+function formatRub(value: number): string {
+  return `${value.toLocaleString('ru-RU')} ₽`;
+}
+
+export function MenuPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | 'new' | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [modifiers, setModifiers] = useState<Modifier[]>([]);
   const [modifierDraft, setModifierDraft] = useState({ name: '', priceRub: '' });
   const [uploading, setUploading] = useState(false);
-
-  const categoryName = useMemo(() => {
-    const map = new Map(categories.map((c) => [c.id, c.name]));
-    return (id: string) => map.get(id) ?? id;
-  }, [categories]);
 
   const handleError = (err: unknown) => {
     if (err instanceof ApiError && err.status === 401) return onUnauthorized();
@@ -112,15 +112,72 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
       .then(([itemsResult, categoriesResult]) => {
         setItems(itemsResult);
         setCategories(categoriesResult);
+        setSelectedCategoryId((current) => current ?? categoriesResult[0]?.id ?? null);
       })
       .catch(handleError);
   };
 
   useEffect(load, []);
 
+  const itemCountByCategory = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) counts.set(item.categoryId, (counts.get(item.categoryId) ?? 0) + 1);
+    return counts;
+  }, [items]);
+
+  const itemsInSelectedCategory = useMemo(
+    () => items.filter((item) => item.categoryId === selectedCategoryId),
+    [items, selectedCategoryId],
+  );
+
+  const selectedCategory = categories.find((c) => c.id === selectedCategoryId) ?? null;
+
+  const addCategory = async () => {
+    const name = prompt('Название новой категории');
+    if (!name) return;
+    try {
+      const created = await api.createCategory({ name });
+      await Promise.resolve(load());
+      setSelectedCategoryId(created.id);
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
+  const renameCategory = async (category: Category) => {
+    const name = prompt('Новое название категории', category.name);
+    if (!name || name === category.name) return;
+    try {
+      await api.updateCategory(category.id, { name });
+      load();
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
+  const removeCategory = async (category: Category) => {
+    if (!confirm(`Удалить категорию «${category.name}»? Блюда в ней нужно перенести заранее.`)) return;
+    try {
+      await api.deleteCategory(category.id);
+      if (selectedCategoryId === category.id) setSelectedCategoryId(null);
+      load();
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
+  const toggleAvailability = async (item: Item) => {
+    try {
+      await api.updateItem(item.id, { isAvailable: !item.isAvailable });
+      load();
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const startCreate = () => {
     setEditingId('new');
-    setDraft({ ...EMPTY_DRAFT, categoryId: categories[0]?.id ?? '' });
+    setDraft({ ...EMPTY_DRAFT, categoryId: selectedCategoryId ?? categories[0]?.id ?? '' });
     setModifiers([]);
   };
 
@@ -208,10 +265,10 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
       <div className="heading">
         <div>
           <p className="eyebrow">Каталог</p>
-          <h1>Блюда</h1>
+          <h1>Меню</h1>
         </div>
         {!editingId && (
-          <button className="primary" onClick={startCreate}>
+          <button className="primary" onClick={startCreate} disabled={!categories.length}>
             + Добавить блюдо
           </button>
         )}
@@ -263,9 +320,7 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
               <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} disabled={uploading} />
             </label>
             {uploading && <span className="muted">Загрузка…</span>}
-            {draft.imageUrl && !uploading && (
-              <img src={draft.imageUrl} alt="" className="image-preview" />
-            )}
+            {draft.imageUrl && !uploading && <img src={draft.imageUrl} alt="" className="image-preview" />}
             <label className="span-2">
               Описание
               <textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} rows={2} />
@@ -339,39 +394,69 @@ export function ItemsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
         </form>
       )}
 
-      <div className="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>Блюдо</th>
-              <th>Категория</th>
-              <th>Цена</th>
-              <th>Наличие</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>
-                  <b>{item.name}</b>
-                </td>
-                <td>{categoryName(item.categoryId)}</td>
-                <td>{item.priceRub} ₽</td>
-                <td>{item.isAvailable ? <span className="status ok">в наличии</span> : <span className="status">нет</span>}</td>
-                <td>
-                  <a onClick={() => startEdit(item)}>Изменить</a> <a onClick={() => remove(item.id)}>Удалить</a>
-                </td>
-              </tr>
-            ))}
-            {!items.length && (
-              <tr>
-                <td colSpan={5}>Блюд пока нет</td>
-              </tr>
+      {!editingId && (
+        <div className="menu-board">
+          <div className="menu-sidebar">
+            <div className="menu-sidebar-title">
+              <h2>Категории · {categories.length}</h2>
+              <button className="icon-button" onClick={addCategory} title="Добавить категорию">
+                +
+              </button>
+            </div>
+            <div className="category-list">
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  className={`category-row${c.id === selectedCategoryId ? ' selected' : ''}`}
+                  onClick={() => setSelectedCategoryId(c.id)}
+                >
+                  <span>{c.name}</span>
+                  <span className="count">{itemCountByCategory.get(c.id) ?? 0}</span>
+                </button>
+              ))}
+              {!categories.length && <p className="muted">Категорий пока нет</p>}
+            </div>
+          </div>
+
+          <div className="panel menu-content">
+            {selectedCategory ? (
+              <>
+                <div className="menu-content-header">
+                  <div>
+                    <h2>{selectedCategory.name}</h2>
+                    <span className="muted">{itemsInSelectedCategory.length} позиций</span>
+                  </div>
+                  <div className="inline-form" style={{ marginBottom: 0 }}>
+                    <a onClick={() => renameCategory(selectedCategory)}>Переименовать</a>
+                    <a onClick={() => removeCategory(selectedCategory)}>Удалить категорию</a>
+                  </div>
+                </div>
+                {itemsInSelectedCategory.map((item) => (
+                  <div className={`item-row${item.isAvailable ? '' : ' item-row-unavailable'}`} key={item.id}>
+                    <label className="sw-toggle" title={item.isAvailable ? 'В наличии' : 'Нет в наличии'}>
+                      <input type="checkbox" checked={item.isAvailable} onChange={() => toggleAvailability(item)} />
+                      <span className="track" />
+                    </label>
+                    {item.imageUrl ? <img src={item.imageUrl} alt="" className="item-thumb" /> : <div className="item-thumb" />}
+                    <div className="item-row-name">
+                      <b>{item.name}</b>
+                      {item.weightLabel && <span className="muted weight">{item.weightLabel}</span>}
+                    </div>
+                    <div className="item-row-price">{formatRub(item.priceRub)}</div>
+                    <a onClick={() => startEdit(item)}>Изменить</a>
+                    <a onClick={() => remove(item.id)}>Удалить</a>
+                  </div>
+                ))}
+                {!itemsInSelectedCategory.length && (
+                  <div className="order-detail-section muted">В этой категории пока нет блюд</div>
+                )}
+              </>
+            ) : (
+              <div className="order-detail-section muted">Выберите категорию слева или создайте новую</div>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

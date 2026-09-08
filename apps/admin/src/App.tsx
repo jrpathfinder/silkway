@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { getToken, setToken } from './api';
-import { CategoriesPanel } from './components/CategoriesPanel';
 import { ImportExportPanel } from './components/ImportExportPanel';
-import { ItemsPanel } from './components/ItemsPanel';
 import { LoginScreen } from './components/LoginScreen';
+import { MenuPanel } from './components/MenuPanel';
 import { OrdersPanel } from './components/OrdersPanel';
 import { PromotionsPanel } from './components/PromotionsPanel';
 
-type Tab = 'orders' | 'items' | 'categories' | 'promotions' | 'import-export';
+type Tab = 'orders' | 'menu' | 'promotions' | 'import-export';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'orders', label: 'Заказы' },
-  { id: 'items', label: 'Блюда' },
-  { id: 'categories', label: 'Категории' },
+  { id: 'menu', label: 'Меню' },
   { id: 'promotions', label: 'Акции' },
   { id: 'import-export', label: 'Импорт / Экспорт' },
 ];
@@ -50,8 +48,7 @@ export function App() {
       </header>
       <main className="content">
         {tab === 'orders' && <OrdersPanel onUnauthorized={onUnauthorized} />}
-        {tab === 'items' && <ItemsPanel onUnauthorized={onUnauthorized} />}
-        {tab === 'categories' && <CategoriesPanel onUnauthorized={onUnauthorized} />}
+        {tab === 'menu' && <MenuPanel onUnauthorized={onUnauthorized} />}
         {tab === 'promotions' && <PromotionsPanel onUnauthorized={onUnauthorized} />}
         {tab === 'import-export' && <ImportExportPanel onUnauthorized={onUnauthorized} />}
       </main>

@@ -19,6 +19,16 @@ void main() {
   });
 
   testWidgets('logging in from the profile tab shows the account menu, then logging out returns to the prompt', (tester) async {
+    // Default test surface is 800x600 — much shorter than any real device
+    // this app targets. The theme switcher above the account menu pushes
+    // "Выйти" low enough that at 600px it lands under the shell's bottom
+    // NavigationBar (whose own destination tooltips intercept the tap).
+    // Real devices (874pt+) have plenty of room; size the surface to match.
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await _pumpApp(tester);
     await _goToProfileTab(tester);
 

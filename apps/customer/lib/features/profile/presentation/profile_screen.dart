@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/design_system/theme/theme_mode_notifier.dart';
 import '../../../core/design_system/tokens/sw_spacing.dart';
 import '../../../core/design_system/tokens/sw_typography.dart';
 import '../../../core/design_system/widgets/sw_error_state.dart';
@@ -22,23 +23,33 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Профиль')),
-      body: sessionAsync.when(
-        data: (session) => session.isAuthenticated
-            ? _AuthenticatedProfile(phone: session.phone ?? '')
-            : Center(
-                child: FilledButton(
-                  onPressed: () => context.push('/auth/phone'),
-                  child: const Text('Войти'),
-                ),
+      // Переключатель темы — вне sessionAsync.when: тема должна быть доступна
+      // и без входа, каталог с корзиной и так открыты неавторизованным.
+      body: Column(
+        children: [
+          const _ThemeModeSwitcher(),
+          const Divider(height: 1),
+          Expanded(
+            child: sessionAsync.when(
+              data: (session) => session.isAuthenticated
+                  ? _AuthenticatedProfile(phone: session.phone ?? '')
+                  : Center(
+                      child: FilledButton(
+                        onPressed: () => context.push('/auth/phone'),
+                        child: const Text('Войти'),
+                      ),
+                    ),
+              // Профиль читается из локального хранилища и открывается практически
+              // мгновенно — скелетон тут был бы заметнее самой загрузки.
+              loading: () => const SizedBox.shrink(),
+              error: (error, stack) => SwErrorState(
+                title: 'Не удалось открыть профиль',
+                details: '$error',
+                onRetry: () => ref.invalidate(sessionNotifierProvider),
               ),
-        // Профиль читается из локального хранилища и открывается практически
-        // мгновенно — скелетон тут был бы заметнее самой загрузки.
-        loading: () => const SizedBox.shrink(),
-        error: (error, stack) => SwErrorState(
-          title: 'Не удалось открыть профиль',
-          details: '$error',
-          onRetry: () => ref.invalidate(sessionNotifierProvider),
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -135,6 +146,41 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile> {
           onTap: () => ref.read(sessionNotifierProvider.notifier).logout(),
         ),
       ],
+    );
+  }
+}
+
+class _ThemeModeSwitcher extends ConsumerWidget {
+  const _ThemeModeSwitcher();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(themeModeProvider).valueOrNull ?? ThemeMode.system;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(SwSpacing.screenH, SwSpacing.md, SwSpacing.screenH, SwSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Тема', style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant)),
+          const SizedBox(height: SwSpacing.sm),
+          SegmentedButton<ThemeMode>(
+            // tooltip: '' на каждом сегменте — иначе SegmentedButton вешает
+            // на них Tooltip с оверлеем на весь экран, который в виджет-тестах
+            // перехватывает тапы по всему, что отрисовано ниже (см. "Выйти"
+            // в profile_orders_promotions_test.dart).
+            segments: const [
+              ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Text('Авто'), tooltip: ''),
+              ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Светлая'), tooltip: ''),
+              ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Тёмная'), tooltip: ''),
+            ],
+            selected: {current},
+            showSelectedIcon: false,
+            onSelectionChanged: (selection) => ref.read(themeModeProvider.notifier).setThemeMode(selection.first),
+          ),
+        ],
+      ),
     );
   }
 }

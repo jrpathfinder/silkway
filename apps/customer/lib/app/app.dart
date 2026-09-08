@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/design_system/theme/app_theme.dart';
+import '../core/design_system/theme/theme_mode_notifier.dart';
 import '../core/env/env.dart';
 import '../core/l10n/gen/app_localizations.dart';
 import '../core/providers.dart';
@@ -52,14 +53,15 @@ class SilkwayApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    // Пока LocalKv ещё читается — доля секунды на первом кадре — падаем
+    // обратно на system, а не блокируем запуск на этом чтении.
+    final themeMode = ref.watch(themeModeProvider).valueOrNull ?? ThemeMode.system;
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Silkway',
       theme: AppTheme.light(),
-      // Тёмная тема раньше не поддерживалась вовсе. themeMode.system — берём
-      // выбор пользователя из настроек iOS, а не навязываем свой.
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: router,
       locale: const Locale('ru'),
       supportedLocales: AppLocalizations.supportedLocales,

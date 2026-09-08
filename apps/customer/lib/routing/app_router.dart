@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -129,20 +131,97 @@ class _CustomerShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: shell.goBranch,
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.menu_book_outlined), label: l10n.navMenu),
-          NavigationDestination(
-            icon: const CartBadge(child: Icon(Icons.shopping_basket_outlined)),
-            label: l10n.navCart,
+      // Контент уходит под бар, а не обрывается на его границе — иначе
+      // размытие ниже показывало бы сплошной фон вместо страницы под ним.
+      extendBody: true,
+      body: _ShellSwitchTransition(index: shell.currentIndex, child: shell),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: NavigationBar(
+            backgroundColor: scheme.surface.withValues(alpha: 0.7),
+            selectedIndex: shell.currentIndex,
+            onDestinationSelected: shell.goBranch,
+            destinations: [
+              NavigationDestination(icon: const Icon(Icons.menu_book_outlined), label: l10n.navMenu),
+              NavigationDestination(
+                icon: const CartBadge(child: Icon(Icons.shopping_basket_outlined)),
+                label: l10n.navCart,
+              ),
+              NavigationDestination(icon: const Icon(Icons.person_outline), label: l10n.navProfile),
+            ],
           ),
-          NavigationDestination(icon: const Icon(Icons.person_outline), label: l10n.navProfile),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+/// Лёгкое скольжение+проявление при смене вкладки — чисто декоративное,
+/// поверх `shell`, а не вместо него: `shell` передаётся в [AnimatedBuilder]
+/// как `child` и остаётся тем же виджетом на протяжении всей анимации, так
+/// что go_router не теряет состояние веток (глубину навигации внутри
+/// Корзины, скролл в Меню) при переключении. Перестроение shell с новым
+/// ключом (как в AnimatedSwitcher) этого не гарантирует — поэтому не он.
+class _ShellSwitchTransition extends StatefulWidget {
+  const _ShellSwitchTransition({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_ShellSwitchTransition> createState() => _ShellSwitchTransitionState();
+}
+
+class _ShellSwitchTransitionState extends State<_ShellSwitchTransition> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _curved;
+  // Слева направо или наоборот — так же, как при листании страниц, а не
+  // однообразный наезд в одну сторону. Вычисляется один раз на переключение
+  // в didUpdateWidget, а не на каждой сборке.
+  bool _fromRight = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))..value = 1;
+    _curved = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ShellSwitchTransition oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index) {
+      _fromRight = widget.index >= oldWidget.index;
+      _controller
+        ..value = 0
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _curved,
+      child: widget.child,
+      builder: (context, child) {
+        final value = _curved.value;
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset((1 - value) * (_fromRight ? 18 : -18), 0),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

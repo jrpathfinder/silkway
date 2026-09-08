@@ -10,6 +10,20 @@ Future<void> _goToProfileTab(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Default test surface (800×600) is much shorter than any real device this
+/// app targets. The authenticated profile screen (theme switcher + saved
+/// addresses section above the account menu) pushes lower rows off a 600px
+/// surface, landing under the shell's bottom NavigationBar or off-screen
+/// entirely. Real devices (874pt+) have plenty of room — size the surface to
+/// match for any test that taps or asserts on profile content below the
+/// phone number.
+void _useRealisticViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(402, 874);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   testWidgets('profile tab shows a login prompt when unauthenticated', (tester) async {
     await _pumpApp(tester);
@@ -19,15 +33,7 @@ void main() {
   });
 
   testWidgets('logging in from the profile tab shows the account menu, then logging out returns to the prompt', (tester) async {
-    // Default test surface is 800x600 — much shorter than any real device
-    // this app targets. The theme switcher above the account menu pushes
-    // "Выйти" low enough that at 600px it lands under the shell's bottom
-    // NavigationBar (whose own destination tooltips intercept the tap).
-    // Real devices (874pt+) have plenty of room; size the surface to match.
-    tester.view.physicalSize = const Size(402, 874);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    _useRealisticViewport(tester);
 
     await _pumpApp(tester);
     await _goToProfileTab(tester);
@@ -55,6 +61,7 @@ void main() {
   });
 
   testWidgets('order history prompts for login when unauthenticated, and lists past orders once signed in', (tester) async {
+    _useRealisticViewport(tester);
     await _pumpApp(tester);
     await _goToProfileTab(tester);
 
@@ -75,6 +82,7 @@ void main() {
   });
 
   testWidgets('promotions screen lists the mock loyalty promotions', (tester) async {
+    _useRealisticViewport(tester);
     await _pumpApp(tester);
     await _goToProfileTab(tester);
 

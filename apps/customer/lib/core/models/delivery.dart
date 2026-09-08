@@ -23,9 +23,9 @@ class DeliveryTrackingPoint {
   final String label;
 }
 
-/// Адрес доставки, выбранный на карте при оформлении заказа. Пока без
-/// сохранения между заказами (нет адресной книги) — выбирается заново
-/// каждый раз, отдельная фича на будущее.
+/// Адрес доставки, выбранный на карте при оформлении заказа. Сохранение
+/// между заказами — отдельная сущность [SavedAddress] (адресная книга),
+/// см. `features/profile/application/saved_addresses_notifier.dart`.
 class DeliveryAddress {
   const DeliveryAddress({required this.lat, required this.lng, required this.addressText, this.comment});
 

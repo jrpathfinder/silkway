@@ -7,8 +7,10 @@ import '../../../core/design_system/tokens/sw_spacing.dart';
 import '../../../core/design_system/tokens/sw_typography.dart';
 import '../../../core/design_system/widgets/sw_error_state.dart';
 import '../../../core/design_system/widgets/sw_toast.dart';
+import '../../../core/models/delivery.dart';
 import '../../auth/application/session_notifier.dart';
 import '../application/profile_notifier.dart';
+import '../application/saved_addresses_notifier.dart';
 
 /// Профиль: вход/выход, имя/email и переходы в заказы и акции.
 ///
@@ -130,6 +132,8 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile> {
           ),
         ),
         const SizedBox(height: SwSpacing.xxl),
+        const _SavedAddressesSection(),
+        const SizedBox(height: SwSpacing.xxl),
         ListTile(
           leading: const Icon(Icons.receipt_long_outlined),
           title: const Text('Мои заказы'),
@@ -144,6 +148,56 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile> {
           leading: const Icon(Icons.logout),
           title: const Text('Выйти'),
           onTap: () => ref.read(sessionNotifierProvider.notifier).logout(),
+        ),
+      ],
+    );
+  }
+}
+
+/// Адресная книга: сохранённые адреса доставки с отметкой «по умолчанию».
+/// Тап по строке делает её адресом по умолчанию — им предзаполняется адрес
+/// на оформлении заказа (см. CheckoutScreen).
+class _SavedAddressesSection extends ConsumerWidget {
+  const _SavedAddressesSection();
+
+  Future<void> _addAddress(BuildContext context, WidgetRef ref) async {
+    final result = await context.push<DeliveryAddress>('/checkout/address');
+    if (result != null) {
+      await ref.read(savedAddressesProvider.notifier).add(result);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    final addresses = ref.watch(savedAddressesProvider).valueOrNull ?? const [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Мои адреса', style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant)),
+        const SizedBox(height: SwSpacing.sm),
+        for (final saved in addresses)
+          Card(
+            margin: const EdgeInsets.only(bottom: SwSpacing.sm),
+            child: ListTile(
+              leading: Icon(
+                saved.isDefault ? Icons.star : Icons.star_border,
+                color: saved.isDefault ? scheme.primary : scheme.onSurfaceVariant,
+              ),
+              title: Text(saved.address.addressText, maxLines: 2, overflow: TextOverflow.ellipsis),
+              subtitle: saved.address.comment != null ? Text(saved.address.comment!) : null,
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () => ref.read(savedAddressesProvider.notifier).remove(saved.id),
+              ),
+              onTap: saved.isDefault ? null : () => ref.read(savedAddressesProvider.notifier).setDefault(saved.id),
+            ),
+          ),
+        OutlinedButton.icon(
+          onPressed: () => _addAddress(context, ref),
+          icon: const Icon(Icons.add_location_alt_outlined),
+          label: const Text('Добавить адрес'),
         ),
       ],
     );

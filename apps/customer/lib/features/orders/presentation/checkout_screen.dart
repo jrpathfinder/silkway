@@ -16,6 +16,7 @@ import '../../../core/utils/money.dart';
 import '../../auth/application/session_notifier.dart';
 import '../../cart/application/cart_notifier.dart';
 import '../../locations/presentation/providers/locations_providers.dart';
+import '../../profile/application/saved_addresses_notifier.dart';
 import 'providers/orders_providers.dart';
 
 /// Оформление заказа: подтверждение состава и создание заказа.
@@ -32,12 +33,44 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _placing = false;
+  bool _addressPrefilled = false;
   FulfillmentType _fulfillmentType = FulfillmentType.delivery;
   DeliveryAddress? _address;
 
+  /// Открывает выбор адреса: сохранённые + из истории заказов + карта для
+  /// нового. Отдельный экран с картой (`/checkout/address`) остаётся входом
+  /// для «Новый адрес», а не единственным способом указать адрес.
   Future<void> _pickAddress() async {
-    final result = await context.push<DeliveryAddress>('/checkout/address', extra: _address);
-    if (result != null && mounted) setState(() => _address = result);
+    final choice = await showModalBottomSheet<_AddressChoice>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _AddressPickerSheet(current: _address),
+    );
+    if (choice == null || !mounted) return;
+
+    if (choice.openMapPicker) {
+      final result = await context.push<DeliveryAddress>('/checkout/address', extra: _address);
+      if (result != null && mounted) {
+        setState(() => _address = result);
+        _offerToSaveAddress(result);
+      }
+      return;
+    }
+    setState(() => _address = choice.address);
+  }
+
+  void _offerToSaveAddress(DeliveryAddress address) {
+    final saved = ref.read(savedAddressesProvider).valueOrNull ?? const [];
+    if (saved.any((a) => a.address.addressText == address.addressText)) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Сохранить адрес для следующих заказов?'),
+        action: SnackBarAction(
+          label: 'Сохранить',
+          onPressed: () => ref.read(savedAddressesProvider.notifier).add(address),
+        ),
+      ),
+    );
   }
 
   Future<void> _placeOrder() async {
@@ -90,6 +123,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final locations = ref.watch(activeLocationsProvider).valueOrNull ?? const [];
     final matchingLocations = locations.where((l) => l.id == locationId);
     final selectedLocation = matchingLocations.isEmpty ? null : matchingLocations.first;
+
+    // Предзаполняем адресом по умолчанию из адресной книги один раз, когда
+    // она подгрузилась — тот же приём, что и в ProfileScreen для полей
+    // имени/email, чтобы не затирать выбор, если пользователь уже открывал
+    // карту вручную до того, как книга успела загрузиться.
+    ref.watch(savedAddressesProvider).whenData((addresses) {
+      if (_addressPrefilled) return;
+      _addressPrefilled = true;
+      final defaults = addresses.where((a) => a.isDefault);
+      if (_address == null && defaults.isNotEmpty) {
+        _address = defaults.first.address;
+      }
+    });
 
     final needsAddress = _fulfillmentType == FulfillmentType.delivery && _address == null;
 
@@ -264,6 +310,106 @@ class _PickupRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AddressChoice {
+  const _AddressChoice({this.address, this.openMapPicker = false});
+
+  final DeliveryAddress? address;
+  final bool openMapPicker;
+}
+
+/// Лист выбора адреса: сохранённые адреса из адресной книги, затем адреса
+/// из прошлых заказов (пропуская те, что уже сохранены — не дублировать),
+/// и «Новый адрес» — вход на карту.
+class _AddressPickerSheet extends ConsumerWidget {
+  const _AddressPickerSheet({required this.current});
+
+  final DeliveryAddress? current;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    final saved = ref.watch(savedAddressesProvider).valueOrNull ?? const [];
+    final customerId = ref.watch(sessionNotifierProvider).valueOrNull?.customerId;
+    final history = customerId == null
+        ? const <Order>[]
+        : ref.watch(ordersForCustomerProvider(customerId)).valueOrNull ?? const <Order>[];
+
+    final savedTexts = saved.map((a) => a.address.addressText).toSet();
+    final historyAddresses = <String, DeliveryAddress>{};
+    for (final order in history) {
+      final address = order.deliveryAddress;
+      if (address == null || savedTexts.contains(address.addressText)) continue;
+      historyAddresses[address.addressText] = address;
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(SwSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Адрес доставки', style: SwTypography.h3.copyWith(color: scheme.onSurface)),
+            const SizedBox(height: SwSpacing.md),
+            for (final s in saved)
+              _AddressTile(
+                icon: s.isDefault ? Icons.star : Icons.location_on_outlined,
+                title: s.address.addressText,
+                subtitle: s.address.comment,
+                selected: current?.addressText == s.address.addressText,
+                onTap: () => Navigator.of(context).pop(_AddressChoice(address: s.address)),
+              ),
+            if (historyAddresses.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: SwSpacing.sm),
+                child: Text('Из истории заказов', style: SwTypography.caption.copyWith(color: scheme.onSurfaceVariant)),
+              ),
+              for (final address in historyAddresses.values)
+                _AddressTile(
+                  icon: Icons.history,
+                  title: address.addressText,
+                  subtitle: address.comment,
+                  selected: current?.addressText == address.addressText,
+                  onTap: () => Navigator.of(context).pop(_AddressChoice(address: address)),
+                ),
+            ],
+            const SizedBox(height: SwSpacing.sm),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.add_location_alt_outlined, color: scheme.primary),
+              title: Text('Новый адрес', style: SwTypography.bodyStrong.copyWith(color: scheme.primary)),
+              onTap: () => Navigator.of(context).pop(const _AddressChoice(openMapPicker: true)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddressTile extends StatelessWidget {
+  const _AddressTile({required this.icon, required this.title, required this.selected, required this.onTap, this.subtitle});
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: selected ? scheme.primary : scheme.onSurfaceVariant),
+      title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
+      subtitle: subtitle != null ? Text(subtitle!) : null,
+      trailing: selected ? Icon(Icons.check, color: scheme.primary) : null,
+      onTap: onTap,
     );
   }
 }

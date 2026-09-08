@@ -11,16 +11,20 @@ import 'package:flutter/material.dart';
 /// допустимы только внутри `app_theme.dart`.
 abstract final class SwColors {
   // ── Бренд ────────────────────────────────────────────────────────────────
-  /// Терракота — основное действие. Тёплый, «съедобный» тон, на нём кнопки.
-  static const terracotta = Color(0xffC0562F);
-  static const terracottaLight = Color(0xffE8A48B);
+  // Три цвета взяты напрямую с логотипа («Чайхана Шёлковый путь» на шёлковой
+  // ткани) — по одному из красного, синего и жёлтого/золотого спектра ткани
+  // и вышивки, а не абстрактно подобранные «восточные» тона.
 
-  /// Индиго — вторичный акцент, из синей росписи по керамике.
-  static const indigo = Color(0xff2E4A7D);
-  static const indigoLight = Color(0xff8FA6CE);
+  /// Красный — основное действие. Взят из красных секций ткани на логотипе.
+  static const terracotta = Color(0xff9C3A2C);
+  static const terracottaLight = Color(0xffE3AC9B);
 
-  /// Латунь — подсветка избранного и акций.
-  static const brass = Color(0xff9C7A21);
+  /// Синий — вторичный акцент. Взят из индиго-секций ткани на логотипе.
+  static const indigo = Color(0xff1F3D63);
+  static const indigoLight = Color(0xff8CA3CC);
+
+  /// Золото — подсветка избранного и акций. Взято из вышивки логотипа.
+  static const brass = Color(0xffC89A3D);
 
   /// Тёмно-коричневый фон заставки. Держим здесь, чтобы значение не
   /// расходилось с pubspec.yaml и SplashScreen.
@@ -46,8 +50,8 @@ abstract final class SwColors {
   static const hairlineDark = Color(0xff372F28);
 
   /// В тёмной теме терракота выцветает и теряет контраст — берём осветлённую.
-  static const terracottaDark = Color(0xffE07A52);
-  static const indigoOnDark = Color(0xff9DB4DC);
+  static const terracottaDark = Color(0xffDD8058);
+  static const indigoOnDark = Color(0xff9FB6DE);
 
   // ── Статусы ──────────────────────────────────────────────────────────────
   // Отдельные от акцента: статус заказа не должен зависеть от брендового

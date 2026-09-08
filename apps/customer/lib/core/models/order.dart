@@ -1,3 +1,5 @@
+import 'delivery.dart';
+
 /// Заказ и его статус.
 ///
 /// Статус на проводе приходит в SCREAMING_SNAKE_CASE, отсюда [fromWire].
@@ -36,6 +38,27 @@ enum OrderStatus {
         throw ArgumentError('Unknown order status: $value');
     }
   }
+
+  String toWire() => switch (this) {
+        OrderStatus.pendingPayment => 'PENDING_PAYMENT',
+        OrderStatus.paid => 'PAID',
+        OrderStatus.accepted => 'ACCEPTED',
+        OrderStatus.preparing => 'PREPARING',
+        OrderStatus.readyForDelivery => 'READY_FOR_DELIVERY',
+        OrderStatus.inDelivery => 'IN_DELIVERY',
+        OrderStatus.delivered => 'DELIVERED',
+        OrderStatus.cancelled => 'CANCELLED',
+        OrderStatus.refunded => 'REFUNDED',
+      };
+}
+
+enum FulfillmentType {
+  delivery,
+  pickup;
+
+  String toWire() => this == FulfillmentType.delivery ? 'DELIVERY' : 'PICKUP';
+
+  static FulfillmentType fromWire(String? value) => value == 'PICKUP' ? FulfillmentType.pickup : FulfillmentType.delivery;
 }
 
 class OrderLine {
@@ -60,6 +83,14 @@ class OrderLine {
         unitPriceRub: (json['unitPriceRub'] as num).toDouble(),
         modifierIds: (json['modifierIds'] as List<dynamic>? ?? const []).cast<String>(),
       );
+
+  Map<String, dynamic> toJson() => {
+        'itemId': itemId,
+        'name': name,
+        'quantity': quantity,
+        'unitPriceRub': unitPriceRub,
+        'modifierIds': modifierIds,
+      };
 }
 
 class Order {
@@ -72,6 +103,8 @@ class Order {
     required this.status,
     required this.createdAt,
     this.paymentId,
+    this.fulfillmentType = FulfillmentType.delivery,
+    this.deliveryAddress,
   });
 
   final String id;
@@ -82,6 +115,8 @@ class Order {
   final OrderStatus status;
   final DateTime createdAt;
   final String? paymentId;
+  final FulfillmentType fulfillmentType;
+  final DeliveryAddress? deliveryAddress;
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json['id'] as String,
@@ -94,5 +129,24 @@ class Order {
         status: OrderStatus.fromWire(json['status'] as String),
         createdAt: DateTime.parse(json['createdAt'] as String),
         paymentId: json['paymentId'] as String?,
+        fulfillmentType: FulfillmentType.fromWire(json['fulfillmentType'] as String?),
+        deliveryAddress: json['deliveryAddress'] == null
+            ? null
+            : DeliveryAddress.fromJson(json['deliveryAddress'] as Map<String, dynamic>),
       );
+
+  /// Только для локального хранения мок-заказов (OrdersRepositoryMock) —
+  /// реальный бэкенд заказы не читает обратно из этого JSON, он их создаёт.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'locationId': locationId,
+        'customerId': customerId,
+        'lines': lines.map((l) => l.toJson()).toList(),
+        'totalRub': totalRub,
+        'status': status.toWire(),
+        'createdAt': createdAt.toIso8601String(),
+        if (paymentId != null) 'paymentId': paymentId,
+        'fulfillmentType': fulfillmentType.toWire(),
+        if (deliveryAddress != null) 'deliveryAddress': deliveryAddress!.toJson(),
+      };
 }

@@ -1,25 +1,15 @@
 import '../../../core/models/location.dart';
 import '../../../core/ports/locations_repository.dart';
 
-/// The real backend currently seeds only one location (`ca-moscow-1`, see
-/// locations.service.ts). A second mock location is added here purely to
-/// make the location-picker sheet demoable before a second real location
-/// exists — expect the list to shrink to one when USE_MOCKS=false today.
+/// Mirrors the real backend, which seeds exactly this one location (see
+/// locations.service.ts).
 class LocationsRepositoryMock implements LocationsRepository {
   static const _locations = [
     RestaurantLocation(
       id: 'ca-moscow-1',
       cityId: 'moscow',
-      name: 'Шелковый путь — Москва (Центр)',
-      address: 'Москва, адрес будет указан при запуске',
-      timezone: 'Europe/Moscow',
-      isActive: true,
-    ),
-    RestaurantLocation(
-      id: 'ca-moscow-2',
-      cityId: 'moscow',
-      name: 'Шелковый путь — Москва (Юг)',
-      address: 'Москва, адрес будет указан при запуске',
+      name: 'Шелковый путь — Москва',
+      address: 'Москва, ул. Народного Ополчения, 20к1',
       timezone: 'Europe/Moscow',
       isActive: true,
     ),

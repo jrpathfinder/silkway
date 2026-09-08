@@ -1,50 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:silkway_app/features/cart/presentation/cart_screen.dart';
+import 'package:silkway_app/features/catalog/presentation/home_screen.dart';
+import 'package:silkway_app/features/catalog/presentation/item_detail_sheet.dart';
 
 import '../helpers/pump_helpers.dart';
 
 Future<void> _pumpApp(WidgetTester tester) => pumpAppPastSplash(tester);
 
+/// Кнопки «+»/«−» есть и на карточках меню, и в степпере, а вкладки живут в
+/// IndexedStack и не выгружаются при переключении — поэтому поиск по иконке
+/// нужно ограничивать конкретным экраном.
+Finder _inside(Type screen, IconData icon) =>
+    find.descendant(of: find.byType(screen), matching: find.byIcon(icon));
+
+/// Меню теперь разбито на разделы по категориям, и списки внутри ленивые:
+/// блюдо из второго раздела просто не существует в дереве, пока до него не
+/// доскроллили. Поэтому ищем прокруткой, а не голым find.
+Future<void> _scrollToDish(WidgetTester tester, String name) async {
+  await tester.scrollUntilVisible(
+    find.text(name),
+    200,
+    scrollable: find.descendant(
+      of: find.byKey(HomeScreen.menuListKey),
+      matching: find.byType(Scrollable),
+    ).first,
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('browsing, adding to cart, and editing the cart line', (tester) async {
     await _pumpApp(tester);
 
-    // Home screen shows the mock catalog.
-    expect(find.text('Плов классический'), findsOneWidget);
-    expect(find.text('Самса с бараниной'), findsOneWidget);
+    // Меню показывает каталог из моков, разложенный по разделам.
+    // Название категории встречается дважды: чип фильтра и заголовок раздела.
+    expect(find.text('Всё'), findsOneWidget);
+    expect(find.text('Горячие блюда'), findsNWidgets(2));
+    expect(find.text('Плов по-ташкентски'), findsOneWidget);
 
-    // Open the item-detail sheet.
-    await tester.tap(find.text('Плов классический'));
+    // Открываем карточку блюда. Второй раздел проверяется отдельным тестом:
+    // прокрутка к нему уводит «Плов» за пределы экрана.
+    //
+    // ensureVisible обязателен: карточка с фото высокая, и в тестовом
+    // вьюпорте название может оказаться ниже видимой области — тап по
+    // невидимой точке не засчитывается.
+    await tester.ensureVisible(find.text('Плов по-ташкентски'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Плов по-ташкентски'));
     await tester.pumpAndSettle();
 
-    // The description also appears (truncated) on the home card underneath
-    // the sheet, so match the sheet's own copy specifically.
-    expect(find.text('Рис, мясо, морковь и специи.'), findsNWidgets(2));
-    expect(find.text('Дополнительное мясо'), findsOneWidget);
+    // Признак того, что шторка открылась, — модификатор: он есть только в
+    // карточке блюда. Описание встречается и в списке, и в шторке, поэтому
+    // по нему проверять ненадёжно.
+    expect(find.text('Тандырная лепешка'), findsOneWidget);
+    expect(find.textContaining('нежной говядины'), findsAtLeastNWidgets(1));
 
     // Bump quantity to 2 and select the modifier.
-    await tapAndSettle(tester, find.byIcon(Icons.add));
-    await tapAndSettle(tester, find.byType(CheckboxListTile));
+    await tapAndSettle(tester, _inside(ItemDetailSheet, Icons.add_rounded));
+    // Модификатор — своя строка вместо CheckboxListTile: тапаем по названию,
+    // вся строка кликабельна.
+    await tapAndSettle(tester, find.text('Тандырная лепешка'));
     await tapAndSettle(tester, find.text('Добавить в корзину'));
 
     // Switch to the cart tab.
     await tester.tap(find.byIcon(Icons.shopping_basket_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.text('Плов классический'), findsOneWidget);
-    expect(find.text('Дополнительное мясо'), findsOneWidget);
+    expect(find.text('Плов по-ташкентски'), findsOneWidget);
+    expect(find.text('Тандырная лепешка'), findsOneWidget);
     expect(find.text('Товаров: 2'), findsOneWidget);
 
     // Increment then decrement twice back to zero, which removes the line.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(_inside(CartScreen, Icons.add_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Товаров: 3'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(_inside(CartScreen, Icons.remove_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(_inside(CartScreen, Icons.remove_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(_inside(CartScreen, Icons.remove_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Корзина пуста'), findsOneWidget);
@@ -53,6 +89,9 @@ void main() {
   testWidgets('removing a cart line via the delete button', (tester) async {
     await _pumpApp(tester);
 
+    await _scrollToDish(tester, 'Самса с бараниной');
+    await tester.ensureVisible(find.text('Самса с бараниной'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Самса с бараниной'));
     await tester.pumpAndSettle();
     await tapAndSettle(tester, find.text('Добавить в корзину'));
@@ -61,24 +100,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Самса с бараниной'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.tap(_inside(CartScreen, Icons.delete_outline));
     await tester.pumpAndSettle();
 
     expect(find.text('Корзина пуста'), findsOneWidget);
   });
 
-  testWidgets('switching restaurants via the location picker sheet', (tester) async {
+  testWidgets('opening the location picker sheet shows the active location', (tester) async {
     await _pumpApp(tester);
 
-    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+    await tester.tap(find.byKey(HomeScreen.locationPickerKey));
     await tester.pumpAndSettle();
 
     expect(find.text('ВЫБЕРИТЕ РЕСТОРАН'), findsOneWidget);
-    expect(find.textContaining('Москва (Юг)'), findsOneWidget);
+    expect(find.textContaining('Народного Ополчения'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Москва (Юг)'));
+    // Только один филиал — выбор своей же строки просто закрывает шторку.
+    await tester.tap(find.textContaining('Народного Ополчения'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Москва (Юг)'), findsOneWidget);
+    expect(find.text('ВЫБЕРИТЕ РЕСТОРАН'), findsNothing);
   });
 }

@@ -37,11 +37,53 @@ create table if not exists catalog_item (
   is_available boolean not null default true
 );
 
+-- schema.sql перезапускается на каждом старте (см. DatabaseService), но
+-- "create table if not exists" не добавляет колонки в уже существующую
+-- таблицу — поэтому новые поля идут отдельными ALTER, а не в CREATE TABLE
+-- выше, иначе на любой уже поднятой базе они бы просто не появились.
+alter table catalog_item add column if not exists image_url text;
+alter table catalog_item add column if not exists weight_label text;
+alter table catalog_item add column if not exists composition text;
+alter table catalog_item add column if not exists calories_kcal numeric;
+alter table catalog_item add column if not exists protein_g numeric;
+alter table catalog_item add column if not exists fat_g numeric;
+alter table catalog_item add column if not exists carbs_g numeric;
+alter table catalog_item add column if not exists modifier_group_label text;
+alter table catalog_item add column if not exists rating_percent integer;
+alter table catalog_item add column if not exists rating_count integer;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'catalog_item_rating_percent_check') then
+    alter table catalog_item add constraint catalog_item_rating_percent_check check (rating_percent between 0 and 100);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'catalog_item_rating_count_check') then
+    alter table catalog_item add constraint catalog_item_rating_count_check check (rating_count >= 0);
+  end if;
+end $$;
+
 create table if not exists catalog_modifier (
   id text primary key,
   item_id text not null references catalog_item(id),
   name text not null,
   price_minor integer not null default 0 check (price_minor >= 0)
+);
+
+-- Скидки применяются динамически при чтении каталога (CatalogService), а не
+-- записываются статичной ценой в catalog_item — так цена никогда не protухнет
+-- относительно активности акции.
+create table if not exists promotion (
+  id text primary key,
+  name text not null,
+  discount_type text not null check (discount_type in ('percent', 'fixed')),
+  discount_value numeric not null check (discount_value > 0),
+  item_id text references catalog_item(id) on delete cascade,
+  category_id text references catalog_category(id) on delete cascade,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  constraint promotion_scope_exclusive check (
+    (item_id is not null and category_id is null) or (item_id is null and category_id is not null)
+  )
 );
 
 insert into brand (id, name) values ('central-asia', 'Central Asia')
@@ -96,6 +138,14 @@ create table if not exists order_header (
   payment_id text,
   created_at timestamptz not null default now()
 );
+
+-- "create table if not exists" above doesn't add columns to an already-
+-- created table — this covers both a fresh database and the schema's own
+-- prior shape (OrdersService was fully in-memory before, so no order data
+-- is lost by adding this). Holds everything about what was ordered that
+-- doesn't have its own table: line items, fulfillment type, delivery
+-- address. See OrdersService.mapRow / buildOrderLines in orders.service.ts.
+alter table order_header add column if not exists details jsonb not null default '{}'::jsonb;
 
 create table if not exists order_event (
   id uuid primary key default gen_random_uuid(),

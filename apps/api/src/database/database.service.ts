@@ -11,7 +11,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   constructor() {
     const connectionString = process.env.DATABASE_URL;
     if (connectionString) {
-      this.pool = new Pool({ connectionString, max: Number(process.env.DB_POOL_SIZE ?? 10) });
+      // Managed Postgres (Timeweb DBaaS, RDS, ...) typically requires TLS on
+      // the connection; local docker-compose Postgres doesn't speak it at
+      // all, so this stays opt-in rather than always-on. rejectUnauthorized
+      // is off because most managed providers hand out certs from an
+      // internal CA the Node trust store doesn't know — the connection is
+      // still encrypted, just not chain-verified.
+      const ssl = process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined;
+      this.pool = new Pool({ connectionString, max: Number(process.env.DB_POOL_SIZE ?? 10), ssl });
     } else {
       this.logger.warn('DATABASE_URL is not configured; database-backed features use development fallbacks.');
     }
@@ -24,7 +31,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     if (!this.pool) return;
 
-    const schemaPath = join(process.cwd(), 'src/database/schema.sql');
+    // Relative to this compiled file's own location, not the process cwd —
+    // "npm run start:dev" (ts-node, cwd = apps/api) and "node dist/main.js"
+    // (production, cwd could be anything) both resolve correctly this way.
+    // The build script copies schema.sql next to the compiled .js for this.
+    const schemaPath = join(__dirname, 'schema.sql');
     const schema = await readFile(schemaPath, 'utf8');
     await this.pool.query(schema);
     this.logger.log('PostgreSQL schema is ready.');

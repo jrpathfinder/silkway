@@ -31,11 +31,15 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
-      await ref.read(sessionNotifierProvider.notifier).requestOtp(_controller.text);
+      final result = await ref.read(sessionNotifierProvider.notifier).requestOtp(_controller.text);
       if (!mounted) return;
       final query = <String, String>{
         'phone': _controller.text,
         if (widget.returnTo != null) 'returnTo': widget.returnTo!,
+        // Только пока бэкенд не подключён к настоящей sms.ru (см. devCode на
+        // OtpVerifyScreen) — избавляет от чтения серверных логов при
+        // локальном тестировании.
+        if (result.devCode != null) 'devCode': result.devCode!,
       };
       context.push(Uri(path: '/auth/otp', queryParameters: query).toString());
     } finally {

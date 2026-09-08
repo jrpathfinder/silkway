@@ -7,13 +7,15 @@ import '../../../core/l10n/gen/app_localizations.dart';
 import '../application/session_notifier.dart';
 
 /// Ввод кода из SMS — второй шаг входа.
-///
-/// В моках и в dev-режиме бэкенда подходит код `0000`.
 class OtpVerifyScreen extends ConsumerStatefulWidget {
-  const OtpVerifyScreen({super.key, required this.phone, this.returnTo});
+  const OtpVerifyScreen({super.key, required this.phone, this.returnTo, this.devCode});
 
   final String phone;
   final String? returnTo;
+
+  /// Код в открытом виде — только пока бэкенд настроен на мок-провайдер SMS
+  /// (см. AuthService.requestOtp). С реальным sms.ru это всегда null.
+  final String? devCode;
 
   @override
   ConsumerState<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
@@ -55,11 +57,18 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(l10n.authOtpSentTo(widget.phone)),
+            if (widget.devCode != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Код (dev): ${widget.devCode}',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+              ),
+            ],
             const SizedBox(height: 16),
             TextField(
               controller: _controller,
               keyboardType: TextInputType.number,
-              maxLength: 4,
+              maxLength: 6,
               decoration: InputDecoration(border: const OutlineInputBorder(), labelText: l10n.authOtpLabel),
             ),
             const SizedBox(height: 20),

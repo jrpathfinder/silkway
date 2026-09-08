@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../core/design_system/widgets/sw_error_state.dart';
 import '../../../core/providers.dart';
 import '../../orders/presentation/providers/orders_providers.dart';
 import 'providers/payment_providers.dart';
@@ -29,6 +30,8 @@ class PaymentWebviewScreen extends ConsumerStatefulWidget {
 class _PaymentWebviewScreenState extends ConsumerState<PaymentWebviewScreen> {
   WebViewController? _webViewController;
   Timer? _pollTimer;
+  Object? _error;
+  bool _pageLoading = true;
 
   @override
   void initState() {
@@ -37,27 +40,50 @@ class _PaymentWebviewScreenState extends ConsumerState<PaymentWebviewScreen> {
   }
 
   Future<void> _start() async {
-    final env = ref.read(envProvider);
-    await ref.read(paymentRepositoryProvider).createCheckout(widget.orderId);
+    setState(() => _error = null);
+    try {
+      final env = ref.read(envProvider);
+      final checkout = await ref.read(paymentRepositoryProvider).createCheckout(widget.orderId);
 
-    if (env.useMocks) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (mounted) context.go('/orders/${widget.orderId}');
-      return;
+      if (env.useMocks) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        if (mounted) context.go('/orders/${widget.orderId}');
+        return;
+      }
+
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageStarted: (_) {
+              if (mounted) setState(() => _pageLoading = true);
+            },
+            onPageFinished: (_) {
+              if (mounted) setState(() => _pageLoading = false);
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(checkout.confirmationUrl));
+      _pollTimer = Timer.periodic(const Duration(seconds: 3), _poll);
+      if (mounted) setState(() {});
+    } catch (error) {
+      if (mounted) setState(() => _error = error);
     }
+  }
 
-    final checkout = await ref.read(paymentRepositoryProvider).createCheckout(widget.orderId);
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(checkout.confirmationUrl));
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+  Future<void> _poll(Timer timer) async {
+    try {
       final order = await ref.read(ordersRepositoryProvider).getById(widget.orderId);
       if (order.status.name != 'pendingPayment' && mounted) {
-        _pollTimer?.cancel();
+        timer.cancel();
         context.go('/orders/${widget.orderId}');
       }
-    });
-    if (mounted) setState(() {});
+    } catch (_) {
+      // Одна неудавшаяся проверка не должна обрывать оплату — платёж мог
+      // пройти, просто статус пока не удалось получить. Пробуем на
+      // следующем тике; WebView с настоящей платёжной страницей остаётся
+      // открытым и рабочим всё это время.
+    }
   }
 
   @override
@@ -70,9 +96,16 @@ class _PaymentWebviewScreenState extends ConsumerState<PaymentWebviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Оплата')),
-      body: _webViewController == null
-          ? const Center(child: CircularProgressIndicator())
-          : WebViewWidget(controller: _webViewController!),
+      body: _error != null
+          ? SwErrorState(title: 'Не удалось начать оплату', details: '$_error', onRetry: _start)
+          : _webViewController == null
+              ? const Center(child: CircularProgressIndicator())
+              : Stack(
+                  children: [
+                    WebViewWidget(controller: _webViewController!),
+                    if (_pageLoading) const Center(child: CircularProgressIndicator()),
+                  ],
+                ),
     );
   }
 }

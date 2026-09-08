@@ -6,7 +6,7 @@ void main() {
     final location = RestaurantLocation.fromJson({
       'id': 'ca-moscow-1',
       'cityId': 'moscow',
-      'name': 'Шелковый путь — Москва (Центр)',
+      'name': 'Шелковый путь — Москва',
       'address': 'Москва, адрес будет указан при запуске',
       'timezone': 'Europe/Moscow',
       'isActive': true,

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/tokens/sw_spacing.dart';
 import '../../../core/design_system/widgets/sw_bottom_sheet.dart';
+import '../../../core/design_system/widgets/sw_error_state.dart';
+import '../../../core/design_system/widgets/sw_skeleton.dart';
 import '../../../core/models/location.dart';
 import 'providers/locations_providers.dart';
 
@@ -34,11 +37,18 @@ class _LocationPickerContent extends ConsumerWidget {
             data: (locations) => Column(
               children: [for (final location in locations) _LocationTile(location: location, selected: location.id == selectedId)],
             ),
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
+            loading: () => const Column(
+              children: [
+                SwSkeleton(width: double.infinity, height: 76, radius: SwSpacing.radiusLg),
+                SizedBox(height: SwSpacing.md),
+                SwSkeleton(width: double.infinity, height: 76, radius: SwSpacing.radiusLg),
+              ],
             ),
-            error: (error, stack) => Text('Не удалось загрузить рестораны: $error'),
+            error: (error, stack) => SwErrorState(
+              title: 'Не удалось загрузить филиалы',
+              details: '$error',
+              onRetry: () => ref.invalidate(activeLocationsProvider),
+            ),
           ),
         ],
       ),

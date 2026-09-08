@@ -38,6 +38,12 @@ dependencies:
   # Payment checkout
   webview_flutter: ^4.9.0
 
+  # Delivery address map picker (OpenStreetMap — no API key needed; see
+  # core/map/map_provider.dart for swapping in Yandex MapKit later).
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

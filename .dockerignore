@@ -1,0 +1,18 @@
+# Repo-root build context for apps/api/Dockerfile — keep this lean, the
+# Flutter tree especially (pods/build artifacts) is huge and irrelevant to
+# the API image.
+apps/customer
+apps/admin/node_modules
+apps/admin/dist
+apps/api/node_modules
+apps/api/dist
+apps/api/uploads
+packages/contracts/node_modules
+packages/contracts/dist
+node_modules
+.git
+.idea
+.claude
+docs
+tools/out
+*.md

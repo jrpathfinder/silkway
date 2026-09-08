@@ -2,20 +2,33 @@ import '../../../core/models/order.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/ports/courier_repository.dart';
 
-/// No backend courier-assignment HTTP surface exists yet — stub only, wired
-/// once the backend adds it (see ADR-003).
+/// Курьерские заказы через бэкенд (CourierOrdersController, без авторизации —
+/// у курьера пока нет ни логина, ни отдельной сессии, см. ADR-003).
 class CourierRepositoryHttp implements CourierRepository {
   CourierRepositoryHttp(this._client);
 
-  // ignore: unused_field
   final ApiClient _client;
 
   @override
-  Future<List<Order>> listOfferedOrders() => throw UnimplementedError('No backend courier endpoint yet.');
+  Future<List<Order>> listOfferedOrders() async {
+    final res = await _client.dio.get('/v1/courier/orders/offered');
+    return (res.data['data'] as List<dynamic>)
+        .map((o) => Order.fromJson(o as Map<String, dynamic>))
+        .toList();
+  }
 
   @override
-  Future<void> acceptOrder(String orderId) => throw UnimplementedError('No backend courier endpoint yet.');
+  Future<void> acceptOrder(String orderId) async {
+    await _client.dio.post('/v1/courier/orders/$orderId/accept');
+  }
 
   @override
-  Future<void> denyOrder(String orderId) => throw UnimplementedError('No backend courier endpoint yet.');
+  Future<void> denyOrder(String orderId) async {
+    await _client.dio.post('/v1/courier/orders/$orderId/deny');
+  }
+
+  @override
+  Future<void> markDelivered(String orderId) async {
+    await _client.dio.post('/v1/courier/orders/$orderId/deliver');
+  }
 }

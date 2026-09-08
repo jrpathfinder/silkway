@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:silkway_app/features/catalog/presentation/home_screen.dart';
+
 import '../helpers/pump_helpers.dart';
 
 void main() {
@@ -10,6 +12,18 @@ void main() {
       await pumpAppPastSplash(tester);
 
       // Add an item and go to the cart.
+      // «Самса» лежит во втором разделе меню, до неё нужно доскроллить:
+      // списки разделов ленивые.
+      await tester.scrollUntilVisible(
+        find.text('Самса с бараниной'),
+        200,
+        scrollable: find.descendant(
+          of: find.byKey(HomeScreen.menuListKey),
+          matching: find.byType(Scrollable),
+        ).first,
+      );
+      await tester.ensureVisible(find.text('Самса с бараниной'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Самса с бараниной'));
       await tester.pumpAndSettle();
       await tapAndSettle(tester, find.text('Добавить в корзину'));
@@ -47,15 +61,26 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Оформление заказа'), findsOneWidget);
-      expect(find.text('Товаров: 1'), findsOneWidget);
+      // Экран показывает состав заказа, а не только количество позиций.
+      expect(find.text('Самса с бараниной'), findsOneWidget);
+      expect(find.text('К оплате'), findsOneWidget);
 
+      // По умолчанию выбрана доставка, а для неё нужен адрес — кнопка
+      // «Оплатить» недоступна, пока его не указали. Этот тест проверяет
+      // не доставку, а сам платёжный поток, поэтому переключаемся на
+      // самовывоз — так адрес не нужен.
+      await tapAndSettle(tester, find.text('Самовывоз'));
       await tester.tap(find.text('Оплатить'));
       await tester.pumpAndSettle();
 
       // Payment webview screen (mock mode) auto-advances to the order status.
-      expect(find.textContaining('Заказ'), findsWidgets);
-      expect(find.text('Оплачен'), findsOneWidget);
-      expect(find.text('Самса с бараниной × 1'), findsOneWidget);
+      // Статус встречается дважды: крупным заголовком и этапом в таймлайне.
+      expect(find.text('Оплачен'), findsNWidgets(2));
+      expect(find.text('Состав'), findsOneWidget);
+      // Количество теперь отдельной колонкой, поэтому название ищем само по
+      // себе, а не строкой «Самса × 1».
+      expect(find.text('Самса с бараниной'), findsOneWidget);
+      expect(find.text('1×'), findsOneWidget);
     },
   );
 }

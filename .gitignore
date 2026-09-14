@@ -4,6 +4,7 @@ build/
 .env
 .env.*
 !.env.example
+!.env.production.example
 .dart_tool/
 .packages
 .pub-cache/

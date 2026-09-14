@@ -1,0 +1,33 @@
+# Продакшн-запуск API на Timeweb. В отличие от docker-compose.yml (локальная
+# разработка — Postgres+Redis тоже в контейнерах), здесь Postgres — внешняя
+# управляемая база (Timeweb DBaaS), поэтому в этом файле только сам API.
+# Redis не поднимается по той же причине: при одном инстансе API он не нужен
+# (см. DatabaseService/RedisService — optional/.enabled паттерн, отключённый
+# Redis откатывается на in-memory).
+#
+# Запуск:
+#   cd infra
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Секреты читаются из apps/api/.env.production — см.
+# apps/api/.env.production.example для списка обязательных переменных.
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../apps/api/.env.production
+    environment:
+      PORT: 3000
+    # Слушаем только на loopback — снаружи сервер доступен исключительно
+    # через nginx (TLS-терминация, см. infra/nginx/silkway.conf.template).
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - uploads-data:/app/apps/api/uploads
+
+volumes:
+  uploads-data:

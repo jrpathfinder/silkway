@@ -4,18 +4,18 @@
 #   1. cp infra/nginx/silkway.conf.template /etc/nginx/sites-available/silkway.conf
 #   2. ln -s /etc/nginx/sites-available/silkway.conf /etc/nginx/sites-enabled/
 #   3. nginx -t && systemctl reload nginx
-#   4. certbot --nginx -d api.nomiq.net -d admin.nomiq.net
+#   4. certbot --nginx -d silkway.nomiq.net -d admin.nomiq.net
 #      (certbot сам допишет сюда TLS-блоки и настроит редирект с 80 на 443 —
 #      этот файл специально начинается только с http, без ssl_certificate)
 #
-# api.nomiq.net    -> проксирует на API-контейнер (127.0.0.1:3000, см.
+# silkway.nomiq.net -> проксирует на API-контейнер (127.0.0.1:3000, см.
 #                      docker-compose.prod.yml — контейнер слушает только
 #                      loopback, наружу отдаёт только nginx)
 # admin.nomiq.net  -> отдаёт статическую сборку апп/admin (npm run admin:build)
 
 server {
     listen 80;
-    server_name api.nomiq.net;
+    server_name silkway.nomiq.net;
 
     # ЮKassa шлёт вебхуки на этот адрес — не режьте тело запроса и таймауты
     # слишком жёстко, платёжные уведомления должны доходить надёжно.
